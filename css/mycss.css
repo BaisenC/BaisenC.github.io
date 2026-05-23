@@ -32,5 +32,17 @@
     color: #fff;
     background-color: #4b4c4d;
   }
-  
+
+/* 列表底部分页码:
+   light 模式保留默认黑底白字 (butterfly 自带, 不动);
+   dark 模式反转成白底深字, 在深色页面上像个干净按钮 */
+[data-theme="dark"] #pagination .page-number.current {
+  background: #fff;
+  color: #121212;
+}
+[data-theme="dark"] #pagination .page-number:not(.current):hover {
+  background: #fff;
+  color: #121212;
+}
+
   
