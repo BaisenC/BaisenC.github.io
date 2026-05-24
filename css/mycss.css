@@ -140,4 +140,11 @@
   color: #fff;
 }
 
+/* 文章正文图片: butterfly 默认 max-width:100% 会撑满 800px 太大,
+   降到 500px 上限; 容器小于 500px (手机) 时仍跟着缩 (用 min(500px,100%)).
+   想要更大: 单图加 inline style="max-width:800px" 即可单独突破 */
+#article-container img {
+  max-width: min(500px, 100%);
+}
+
   
