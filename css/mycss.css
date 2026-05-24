@@ -127,4 +127,17 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
+/* 6. 文章页底部标签 pill: butterfly 把边框/文字/hover 背景都写死 #000.
+      dark 模式下: 默认柔和白边 + 浅白字; hover 时用极光渐变填充 */
+[data-theme="dark"] #post .tag_share .post-meta__tags {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] #post .tag_share .post-meta__tags:hover {
+  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
+  border-color: transparent;
+  color: #fff;
+}
+
   
