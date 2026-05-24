@@ -45,4 +45,86 @@
   color: #121212;
 }
 
+/* 文章底部版权区: butterfly 把"文章作者/链接/版权声明" 标签和右上角图标写死了 #000,
+   dark 模式下变成黑底黑字看不见. 翻成正文色. */
+[data-theme="dark"] #post .post-copyright .post-copyright-meta,
+[data-theme="dark"] #post .post-copyright:before {
+  color: var(--font-color);
+}
+
+/* butterfly 多处 :hover { color: #000 } 写死, dark 模式悬浮变黑看不见.
+   方案: 给目标元素**永久**铺一层极光渐变背景, 但默认用 text-fill-color (即元素本来的文字色) 盖住.
+        hover 时把 text-fill-color 切到 transparent, 露出渐变.
+   因为只动 text-fill-color (一个可 transition 的颜色属性),
+   进 / 出 hover 都能平滑过渡 0.4 秒. */
+
+/* 1. default: 铺渐变 + 设置 transition. text 显示为元素本来的 color (currentColor 行为). */
+[data-theme="dark"] #recent-posts > .recent-post-item > .recent-post-info > .article-title,
+[data-theme="dark"] #recent-posts > .recent-post-item > .recent-post-info > .article-meta-wrap a,
+[data-theme="dark"] .article-sort-item-title,
+[data-theme="dark"] .category-lists .category-list a,
+[data-theme="dark"] #aside-content .aside-list > .aside-list-item .content > .title,
+[data-theme="dark"] #aside-content .aside-list > .aside-list-item .content > .comment,
+[data-theme="dark"] #aside-content #card-toc .toc-content .toc-link,
+[data-theme="dark"] #post-info #post-meta a,
+[data-theme="dark"] #page-header.nav-fixed #nav #blog-info,
+[data-theme="dark"] #page-header.nav-fixed #nav a,
+[data-theme="dark"] #page-header.nav-fixed #nav #toggle-menu,
+[data-theme="dark"] #article-container .highlight-tools .copy-button,
+[data-theme="dark"] #article-container .tabs > .tab-to-top button,
+[data-theme="dark"] .search-dialog .search-nav .search-close-button,
+[data-theme="dark"] .tag-cloud-list a,
+[data-theme="dark"] #aside-content .card-tag-cloud a {
+  background-image: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition: -webkit-text-fill-color 0.4s ease, color 0.4s ease;
+}
+
+/* 2. hover: 隐藏文字, 露出渐变 */
+[data-theme="dark"] #recent-posts > .recent-post-item > .recent-post-info > .article-title:hover,
+[data-theme="dark"] #recent-posts > .recent-post-item > .recent-post-info > .article-meta-wrap a:hover,
+[data-theme="dark"] .article-sort-item-title:hover,
+[data-theme="dark"] .category-lists .category-list a:hover,
+[data-theme="dark"] #aside-content .aside-list > .aside-list-item .content > .title:hover,
+[data-theme="dark"] #aside-content .aside-list > .aside-list-item .content > .comment:hover,
+[data-theme="dark"] #aside-content #card-toc .toc-content .toc-link:hover,
+[data-theme="dark"] #post-info #post-meta a:hover,
+[data-theme="dark"] #page-header.nav-fixed #nav #blog-info:hover,
+[data-theme="dark"] #page-header.nav-fixed #nav a:hover,
+[data-theme="dark"] #page-header.nav-fixed #nav #toggle-menu:hover,
+[data-theme="dark"] #article-container .highlight-tools .copy-button:hover,
+[data-theme="dark"] #article-container .tabs > .tab-to-top button:hover,
+[data-theme="dark"] .search-dialog .search-nav .search-close-button:hover {
+  -webkit-text-fill-color: transparent;
+}
+
+/* 3. 标签云原规则有 !important, 这里跟着加 */
+[data-theme="dark"] .tag-cloud-list a:hover,
+[data-theme="dark"] #aside-content .card-tag-cloud a:hover {
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+
+/* 4. 侧边栏统计链接 (文章/标签/分类) + 正文里的超链接也走渐变.
+      这俩之前被全局 a:hover {color:#000} 覆盖, 落到通用黑色 */
+[data-theme="dark"] #aside-content .card-info .site-data > a,
+[data-theme="dark"] #article-container a:not(.headerlink) {
+  background-image: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition: -webkit-text-fill-color 0.4s ease, color 0.4s ease;
+}
+
+[data-theme="dark"] #aside-content .card-info .site-data > a:hover,
+[data-theme="dark"] #article-container a:not(.headerlink):hover {
+  -webkit-text-fill-color: transparent;
+}
+
+/* 5. 兜底: 所有其他没被特定规则覆盖的 a:hover, 至少别用纯黑 (butterfly 全局 a:hover {color:#000}).
+      用 90% 白替代; 按钮类 (有自己更高优先级规则) 不受影响 */
+[data-theme="dark"] a:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
   
