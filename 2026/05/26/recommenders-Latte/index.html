@@ -1,0 +1,773 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Latte: Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation | Baisen's Blog</title><meta name="author" content="Bolin Chen"><meta name="copyright" content="Bolin Chen"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="生成式模型 output 端的前缀会压缩 item 间的区分度，限制表达能力。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Latte: Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation">
+<meta property="og:url" content="https://baisen.site/2026/05/26/recommenders-Latte/index.html">
+<meta property="og:site_name" content="Baisen&#39;s Blog">
+<meta property="og:description" content="生成式模型 output 端的前缀会压缩 item 间的区分度，限制表达能力。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://w.wallhaven.cc/full/5y/wallhaven-5y7rw3.jpg">
+<meta property="article:published_time" content="2026-05-25T17:19:13.000Z">
+<meta property="article:modified_time" content="2026-05-25T17:22:51.265Z">
+<meta property="article:author" content="Bolin Chen">
+<meta property="article:tag" content="SID">
+<meta property="article:tag" content="推荐算法">
+<meta property="article:tag" content="生成式">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://w.wallhaven.cc/full/5y/wallhaven-5y7rw3.jpg"><link rel="shortcut icon" href="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/favicon.png"><link rel="canonical" href="https://baisen.site/2026/05/26/recommenders-Latte/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=4.13.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.33/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.11.1/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Latte: Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2026-05-26 01:22:51'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/mycss.css?v=1779598962406"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/Suguru.jpg" onerror="onerror=null;src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">21</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">14</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movie/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://w.wallhaven.cc/full/43/wallhaven-43e7q9.png')"><nav id="nav"><span id="blog-info"><a href="/"><span class="site-name">Baisen's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movie/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Latte: Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-05-25T17:19:13.000Z" title="发表于 2026-05-26 01:19:13">2026-05-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-05-25T17:22:51.265Z" title="更新于 2026-05-26 01:22:51">2026-05-26</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a></span></div><div class="meta-secondline"></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="Expressiveness-Limits-of-Autoregressive-Semantic-ID-Generation-in-Generative-Recommendation"><a href="#Expressiveness-Limits-of-Autoregressive-Semantic-ID-Generation-in-Generative-Recommendation" class="headerlink"></a>Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation</h1><h2 id="基本信息"><a href="#基本信息" class="headerlink"></a>基本信息</h2><table>
+<thead>
+<tr>
+<th>字段</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>标题</strong></td>
+<td>Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation</td>
+</tr>
+<tr>
+<td><strong>作者</strong></td>
+<td>Yupeng Hou, Haven Kim, Clark Mingxuan Ju, Eduardo Escoto, Neil Shah, Julian McAuley</td>
+</tr>
+<tr>
+<td><strong>机构</strong></td>
+<td>University of California San Diego; Snap Inc.</td>
+</tr>
+<tr>
+<td><strong>年份</strong></td>
+<td>2026 (arXiv: 2605.06331v1, 2026-05-07)</td>
+</tr>
+<tr>
+<td><strong>方向</strong></td>
+<td>Generative Recommendation, Semantic ID, Autoregressive Decoding</td>
+</tr>
+<tr>
+<td><strong>代码</strong></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/hyp1231/Latte">https://github.com/hyp1231/Latte</a></td>
+</tr>
+<tr>
+<td><strong>arXiv</strong></td>
+<td><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2605.06331">https://arxiv.org/abs/2605.06331</a></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p> 生成式模型 output 端的前缀会压缩 item 间的区分度。</p>
+<p> 解决办法和上下文token的理念接近，用更多上下文信息来将自回归建模分场景节藕。</p>
+</blockquote>
+<hr>
+<h2 id="摘要"><a href="#摘要" class="headerlink"></a>摘要</h2><p>GR 模型按 token 自回归生成 Semantic ID 时，解码空间天然是一棵树；树上相近的 item 概率被强耦合，也就是说<strong>前面几层SID相同的 item 的概率值是接近的</strong>，因为被前几层SID的条件概率被限制在了一个固定的概率空间内，导致<strong>item-item间的模式受到了自回归的限制</strong>，不同用户对前缀SID相似的item的兴趣无法得到准确节藕。</p>
+<p>作者提出 <strong>Latte</strong>：在 SID 前注入一个随机 latent token，把”单棵树”变成”多棵 latent 条件树”，从而打破耦合，NDCG@10 平均提升 3.45%。</p>
+<h2 id="与已有工作关系"><a href="#与已有工作关系" class="headerlink"></a>与已有工作关系</h2><table>
+<thead>
+<tr>
+<th>类别</th>
+<th>代表工作</th>
+<th>与本文区别</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Item Tokenization</td>
+<td>TIGER, LETTER, ActionPiece, PSID</td>
+<td>本文不改 tokenizer，只动 <strong>生成过程</strong></td>
+</tr>
+<tr>
+<td>Sequential Rec (ID-based)</td>
+<td>SASRec, BERT4Rec, HSTU, FMLP-Rec</td>
+<td>全部作为 baseline 对比</td>
+</tr>
+<tr>
+<td>Generative Rec</td>
+<td>TIGER (RQ-VAE), PSID</td>
+<td>Latte 是对任意 GR 模型的 <strong>plug-in</strong></td>
+</tr>
+</tbody></table>
+<h2 id="研究动机"><a href="#研究动机" class="headerlink"></a>研究动机</h2><h3 id="现有问题"><a href="#现有问题" class="headerlink"></a>现有问题</h3><p><img src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/20260526012256168.png" alt="image-20260526012229445"></p>
+<ul>
+<li>生成式推荐 (GR) 把 item tokenize 成 SID 序列 (e.g., TIGER, LETTER, ActionPiece, PSID)；</li>
+<li>现有工作主要关注 <strong>如何 tokenize</strong>，但 <strong>自回归生成过程本身</strong> 怎样约束模型表达力 <strong>被忽视</strong>；</li>
+<li>token-by-token 生成 &#x3D; 在 SID 诱导的 <strong>decoding tree</strong> 上做 traversal，共享 prefix → 共享概率项 → 强相关。</li>
+</ul>
+<p>举个例子：Pokémon Scarlet（Switch 新版）和 Pokémon Sun（3DS 旧版）在 SID 上距离&#x3D;2，语义上确实相似（都是宝可梦正传）。但是：</p>
+<ul>
+<li>喜欢新主机&#x2F;新画面的用户偏好 Scarlet；</li>
+<li>怀旧&#x2F;喜欢掌机的用户偏好 Sun。</li>
+</ul>
+<p>这两组用户的相对偏好是<strong>反向的</strong>。一个好的个性化推荐系统应该能为不同用户给出不同的相对排序——但 GR 模型由于共享前缀概率项，<strong>结构上</strong>会让 P(Scarlet|u) 和 P(Sun|u) 在所有用户上同涨同跌（Pearson 相关≈1），从而无法翻转。</p>
+<p>换句话说：<strong>SID 设计<u>让相似 item 共享前缀是合理的</u>，但自回归连乘 + 共享前缀让”相对偏好”也被绑定，这一步会限制表达能力。</strong></p>
+<h3 id="三个关键观察"><a href="#三个关键观察" class="headerlink"></a>三个关键观察</h3><ol>
+<li><strong>Decoding as Tree Traversal</strong>：树距离短(前缀SID重合度高) ⇒ 概率高度相关；</li>
+<li><strong>Rank Reversals</strong>：不同用户对同一对 item 的偏好顺序难以反转，表达能力受到自回归形式限制；</li>
+<li><strong>Forced Transitivity</strong>：论文论证了解码树距离满足 ultrametric inequality，迫使”相似 A-B、相似 B-C ⇒ A-C 也被判相似”。</li>
+</ol>
+<hr>
+<h2 id="核心方法：Latte"><a href="#核心方法：Latte" class="headerlink"></a>核心方法：Latte</h2><p><img src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/20260526012256190001.png" alt="image-20260526012245833"></p>
+<h3 id="训练"><a href="#训练" class="headerlink"></a>训练</h3><ul>
+<li>引入小词表 latent tokens $\mathcal{L} &#x3D; {\ell_1, …, \ell_{M’}}$，$M’ \ll M$；</li>
+<li>对每个目标 SID $(c_t^{(1)}, …, c_t^{(m)})$，<strong>随机采样</strong> 一个 $\ell \in \mathcal{L}$ 拼到前面：<br>$$(\ell, c_t^{(1)}, c_t^{(2)}, …, c_t^{(m)})$$</li>
+<li>用标准 next-token prediction loss 训练。</li>
+</ul>
+<h3 id="推理"><a href="#推理" class="headerlink"></a>推理</h3><ul>
+<li>不对 latent token 加约束，自回归生成：<br>$$\mathbb{P}(i_t \mid u) &#x3D; \text{Agg}<em>{\ell \in \mathcal{L}}\left(\mathbb{P}(\ell \mid u) \cdot \prod</em>{j&#x3D;1}^m \mathbb{P}(c_t^{(j)} \mid \ell, c_t^{(1:j-1)}, u)\right)$$</li>
+<li>Agg ∈ {sum, max}，实现上用 beam search 近似。</li>
+</ul>
+<h3 id="直观解释"><a href="#直观解释" class="headerlink"></a>直观解释</h3><ul>
+<li>原本：单棵 decoding tree，item 间结构距离是固定常数；</li>
+<li>Latte：在 super-root 下挂 $|\mathcal{L}|$ 棵子树，<strong>effective distance 变成 context-dependent</strong>：<br>$$d_{\text{eff}}(i, i’; u) &#x3D; \begin{cases} d_\mathcal{T}(i, i’) &amp; \ell^<em>(i,u) &#x3D; \ell^</em>(i’,u) \ 2(m+1) &amp; \text{otherwise} \end{cases}$$</li>
+</ul>
+<hr>
+<h2 id="实验"><a href="#实验" class="headerlink"></a>实验</h2><h3 id="1-实验设置"><a href="#1-实验设置" class="headerlink"></a>1. 实验设置</h3><p><strong>数据集</strong>：Amazon Reviews 2023 的三个子集（Table 7）：</p>
+<table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th align="right">#Users</th>
+<th align="right">#Items</th>
+<th align="right">#Interactions</th>
+<th align="right">Avg seq len</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Instruments</td>
+<td align="right">57,439</td>
+<td align="right">24,587</td>
+<td align="right">511,836</td>
+<td align="right">8.91</td>
+</tr>
+<tr>
+<td>Scientific</td>
+<td align="right">50,985</td>
+<td align="right">25,848</td>
+<td align="right">412,947</td>
+<td align="right">8.10</td>
+</tr>
+<tr>
+<td>Games</td>
+<td align="right">94,762</td>
+<td align="right">25,612</td>
+<td align="right">814,586</td>
+<td align="right">8.60</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>划分</strong>：leave-one-out（最后一次交互测试、倒数第二次验证、剩余训练）；</li>
+<li><strong>指标</strong>：Recall@K、NDCG@K，K ∈ {5, 10}；</li>
+<li><strong>显著性</strong>：Latte 数字带 <code>*</code> 表示对 best baseline 做 paired t-test、$p &lt; 0.05$。</li>
+</ul>
+<p><strong>Latte 模型实现</strong>：</p>
+<ul>
+<li>Backbone 沿用 TIGER 的 T5-style encoder–decoder，4 层 Transformer block，embedding dim &#x3D; 128；</li>
+<li>Tokenizer 默认 <strong>RQ-KMeans</strong>，SID 长度 $m &#x3D; 3$，每位置词表 $M &#x3D; 256$；</li>
+<li>Latent token 数 $M’ \in {2, 4, 8}$ 验证集上调；beam size $\in {50, 100, 500}$；LR $\in {1\text{e-}3, 3\text{e-}3}$，weight decay 0.05，最多 150 epoch + patience 20 早停；</li>
+<li>主表 Latte 用 <strong>max</strong> 作为 Agg；单卡 NVIDIA A6000。</li>
+</ul>
+<p><strong>最优超参（Table 9）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th align="right">$M’$</th>
+<th align="right">Beam</th>
+<th>LR</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Instruments</td>
+<td align="right">4</td>
+<td align="right">500</td>
+<td>3e-3</td>
+</tr>
+<tr>
+<td>Scientific</td>
+<td align="right">8</td>
+<td align="right">500</td>
+<td>3e-3</td>
+</tr>
+<tr>
+<td>Games</td>
+<td align="right">8</td>
+<td align="right">500</td>
+<td>3e-3</td>
+</tr>
+</tbody></table>
+<p><strong>Baselines（11 个）</strong>：</p>
+<ul>
+<li>ID-based：GRU4Rec、BERT4Rec、SASRec、FMLP-Rec、HSTU、FDSA、S³-Rec；</li>
+<li>GR&#x2F;SID-based：TIGER、LETTER、ActionPiece、PSID（<strong>PSID 是 Latte 的直接 base model</strong>）。</li>
+</ul>
+<hr>
+<h3 id="2-主结果（Table-1）"><a href="#2-主结果（Table-1）" class="headerlink"></a>2. 主结果（Table 1）</h3><p>Latte 在三个数据集 × 4 个指标 &#x3D; <strong>12 项 SOTA 全包</strong>。下表对每个数据集列出 best baseline → PSID → Latte：</p>
+<table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>Metric</th>
+<th>Best baseline (model)</th>
+<th>PSID</th>
+<th><strong>Latte</strong></th>
+<th>Δ vs PSID</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Instruments</strong></td>
+<td>R@5</td>
+<td>0.0383 (ActionPiece)</td>
+<td>0.0390</td>
+<td><strong>0.0401*</strong></td>
+<td>+2.82%</td>
+</tr>
+<tr>
+<td></td>
+<td>R@10</td>
+<td>0.0615 (ActionPiece)</td>
+<td>0.0602</td>
+<td><strong>0.0618*</strong></td>
+<td>+0.49%</td>
+</tr>
+<tr>
+<td></td>
+<td>N@5</td>
+<td>0.0246 (LETTER)</td>
+<td>0.0256</td>
+<td><strong>0.0261*</strong></td>
+<td>+1.95%</td>
+</tr>
+<tr>
+<td></td>
+<td>N@10</td>
+<td>0.0318 (ActionPiece)</td>
+<td>0.0325</td>
+<td><strong>0.0331*</strong></td>
+<td>+1.85%</td>
+</tr>
+<tr>
+<td><strong>Scientific</strong></td>
+<td>R@5</td>
+<td>0.0284 (ActionPiece)</td>
+<td>0.0278</td>
+<td><strong>0.0304*</strong></td>
+<td>+7.04%</td>
+</tr>
+<tr>
+<td></td>
+<td>R@10</td>
+<td>0.0452 (ActionPiece)</td>
+<td>0.0445</td>
+<td><strong>0.0470*</strong></td>
+<td>+3.98%</td>
+</tr>
+<tr>
+<td></td>
+<td>N@5</td>
+<td>0.0182 (LETTER&#x2F;ActionPiece)</td>
+<td>0.0181</td>
+<td><strong>0.0196*</strong></td>
+<td>+7.69%</td>
+</tr>
+<tr>
+<td></td>
+<td>N@10</td>
+<td>0.0236 (ActionPiece)</td>
+<td>0.0235</td>
+<td><strong>0.0249*</strong></td>
+<td>+5.51%</td>
+</tr>
+<tr>
+<td><strong>Games</strong></td>
+<td>R@5</td>
+<td>0.0591 (ActionPiece)</td>
+<td>0.0599</td>
+<td><strong>0.0618*</strong></td>
+<td>+3.17%</td>
+</tr>
+<tr>
+<td></td>
+<td>R@10</td>
+<td>0.0939 (PSID)</td>
+<td>0.0939</td>
+<td><strong>0.0958*</strong></td>
+<td>+2.02%</td>
+</tr>
+<tr>
+<td></td>
+<td>N@5</td>
+<td>0.0382 (ActionPiece)</td>
+<td>0.0391</td>
+<td><strong>0.0406*</strong></td>
+<td>+3.84%</td>
+</tr>
+<tr>
+<td></td>
+<td>N@10</td>
+<td>0.0500 (PSID)</td>
+<td>0.0500</td>
+<td><strong>0.0515*</strong></td>
+<td>+3.00%</td>
+</tr>
+</tbody></table>
+<p><strong>Takeaway</strong>：</p>
+<ul>
+<li>平均 NDCG@10 提升 <strong>+3.45%</strong>，Scientific 上最猛（+5.51%）；</li>
+<li>ActionPiece 是最强 baseline，被 Latte 全面超过；</li>
+<li>Latte 提升<strong>不来自更强 tokenizer</strong>——它和 PSID 共用同一套 SID，唯一区别是 prepend latent token。</li>
+</ul>
+<hr>
+<h3 id="3-结构约束分析（Table-2，关键证据）"><a href="#3-结构约束分析（Table-2，关键证据）" class="headerlink"></a>3. 结构约束分析（Table 2，关键证据）</h3><p><strong>目的</strong>：直接量化 GR 模型受 decoding tree 结构约束的程度。<br><strong>方法</strong>：用 Kendall 秩相关 $\tau$ 衡量”树距离 ↔ item-item 概率相似度”的关联强度——$|\tau|$ 越接近 1 说明 item 相似性被树结构绑得越死，越接近 0 表示模型有自由表达灵活相似性。</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th align="right">Instruments ↑</th>
+<th align="right">Scientific ↑</th>
+<th align="right">Games ↑</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TIGER</td>
+<td align="right">−0.7170</td>
+<td align="right">−0.6137</td>
+<td align="right">−0.6462</td>
+</tr>
+<tr>
+<td>PSID</td>
+<td align="right">−0.6225</td>
+<td align="right">−0.4611</td>
+<td align="right">−0.6072</td>
+</tr>
+<tr>
+<td><strong>Latte</strong></td>
+<td align="right"><strong>−0.6030</strong></td>
+<td align="right"><strong>−0.4451</strong></td>
+<td align="right"><strong>−0.5958</strong></td>
+</tr>
+</tbody></table>
+<p>（↑ 表示数值越接近 0 越好；TIGER 用了不同 SID 不直接可比，列出仅作参考。）</p>
+<p><strong>结论</strong>：Latte 用<strong>完全相同</strong>的 SID，把结构相关性显著降低，<strong>直接验证了”打破单棵树约束”在数据上成立</strong>。</p>
+<hr>
+<h3 id="4-通用性：跨-Tokenizer（Table-3）"><a href="#4-通用性：跨-Tokenizer（Table-3）" class="headerlink"></a>4. 通用性：跨 Tokenizer（Table 3）</h3><p>换掉 RQ-KMeans，看 Latte 在其它两种 tokenizer 上是否依然受益（NDCG@10）：</p>
+<table>
+<thead>
+<tr>
+<th>Tokenizer</th>
+<th>Model</th>
+<th align="right">Instruments</th>
+<th align="right">Scientific</th>
+<th align="right">Games</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>OPQ</strong></td>
+<td>PSID</td>
+<td align="right">0.0313</td>
+<td align="right">0.0232</td>
+<td align="right">0.0478</td>
+</tr>
+<tr>
+<td></td>
+<td>Latte</td>
+<td align="right"><strong>0.0318</strong> (+1.68%)</td>
+<td align="right"><strong>0.0235</strong> (+1.37%)</td>
+<td align="right"><strong>0.0493</strong> (+3.24%)</td>
+</tr>
+<tr>
+<td><strong>RQ-VAE</strong></td>
+<td>PSID</td>
+<td align="right">0.0325</td>
+<td align="right">0.0241</td>
+<td align="right">0.0490</td>
+</tr>
+<tr>
+<td></td>
+<td>Latte</td>
+<td align="right"><strong>0.0331</strong> (+2.02%)</td>
+<td align="right"><strong>0.0247</strong> (+2.76%)</td>
+<td align="right"><strong>0.0502</strong> (+2.55%)</td>
+</tr>
+<tr>
+<td><strong>RQ-KMeans</strong></td>
+<td>PSID</td>
+<td align="right">0.0325</td>
+<td align="right">0.0235</td>
+<td align="right">0.0500</td>
+</tr>
+<tr>
+<td></td>
+<td>Latte</td>
+<td align="right"><strong>0.0331</strong> (+2.02%)</td>
+<td align="right"><strong>0.0249</strong> (+5.90%)</td>
+<td align="right"><strong>0.0515</strong> (+3.11%)</td>
+</tr>
+</tbody></table>
+<p>所有 3 × 3 &#x3D; 9 个组合都显著提升。有趣发现：base model 配 RQ-VAE 最好，但配上 Latte 后 <strong>RQ-KMeans 反超</strong>——作者推测是 RQ-KMeans 没有像 RQ-VAE 那样端到端优化，给了 Latte 更多”放松空间”。</p>
+<hr>
+<h3 id="5-聚合方式消融（Table-4，NDCG-10）"><a href="#5-聚合方式消融（Table-4，NDCG-10）" class="headerlink"></a>5. 聚合方式消融（Table 4，NDCG@10）</h3><p>推理时怎么合并不同 latent token 的预测：</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th align="right">Instruments</th>
+<th align="right">Scientific</th>
+<th align="right">Games</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PSID (base)</td>
+<td align="right">0.032462</td>
+<td align="right">0.023531</td>
+<td align="right">0.049994</td>
+</tr>
+<tr>
+<td>Latte (Agg &#x3D; sum)</td>
+<td align="right"><strong>0.033134</strong></td>
+<td align="right"><strong>0.024920</strong></td>
+<td align="right"><strong>0.051547</strong></td>
+</tr>
+<tr>
+<td>Latte (Agg &#x3D; max)</td>
+<td align="right">0.033114</td>
+<td align="right">0.024301</td>
+<td align="right">0.051176</td>
+</tr>
+</tbody></table>
+<p><strong>结论</strong>：sum 略优于 max（差距很小），但两种都比 base 强，方法本身对 Agg 选择 robust。主表 Table 1 用的是 max，所以换 sum 实际可以再涨一点。</p>
+<hr>
+<h3 id="6-Latent-词表大小-M’-（Figure-4）"><a href="#6-Latent-词表大小-M’-（Figure-4）" class="headerlink"></a>6. Latent 词表大小 $M’$（Figure 4）</h3><p>扫了 $M’ \in {0, 1, 2, 4, 8}$（$M’ &#x3D; 0$ 即 PSID base）：</p>
+<ul>
+<li>$M’ &#x3D; 1, 2$：在大部分数据集上<strong>反而掉点</strong>——latent token 预测本身会引入累计误差，分支太少分流效果不够；</li>
+<li>$M’ &#x3D; 4, 8$：稳定超过 base，两者接近；</li>
+<li>三个数据集最优 $M’$ 不同（Instruments&#x3D;4，其它&#x3D;8），需要按数据集调。</li>
+</ul>
+<p><strong>实践含义</strong>：Latte 不是”加得越多越好”，存在最优区间，必须在验证集上 sweep。</p>
+<hr>
+<h3 id="7-Latent-Token-选择是否均匀（Appendix-Table-10）"><a href="#7-Latent-Token-选择是否均匀（Appendix-Table-10）" class="headerlink"></a>7. Latent Token 选择是否均匀（Appendix Table 10）</h3><p>为验证理论分析里”latent token 大致均匀使用”的假设，作者统计 Games 上 $M’ &#x3D; 8$ 时每个 latent token 被选为 dominant path 的概率：</p>
+<table>
+<thead>
+<tr>
+<th align="right">$\ell_1$</th>
+<th align="right">$\ell_2$</th>
+<th align="right">$\ell_3$</th>
+<th align="right">$\ell_4$</th>
+<th align="right">$\ell_5$</th>
+<th align="right">$\ell_6$</th>
+<th align="right">$\ell_7$</th>
+<th align="right">$\ell_8$</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">0.1244</td>
+<td align="right">0.1253</td>
+<td align="right">0.1248</td>
+<td align="right">0.1243</td>
+<td align="right">0.1259</td>
+<td align="right">0.1254</td>
+<td align="right">0.1251</td>
+<td align="right">0.1248</td>
+</tr>
+</tbody></table>
+<p>理想均匀值 $1&#x2F;8 &#x3D; 0.125$，实测全部接近——说明 latent token 没有塌缩到某一个。</p>
+<hr>
+<h3 id="8-进阶：把-Latent-Token-绑定为归纳偏置（Section-6，多模态实验）"><a href="#8-进阶：把-Latent-Token-绑定为归纳偏置（Section-6，多模态实验）" class="headerlink"></a>8. 进阶：把 Latent Token 绑定为归纳偏置（Section 6，多模态实验）</h3><p><strong>问题</strong>：能不能让 latent token 不只是抽象的”分支选择”，而绑定到具体的语义结构？</p>
+<p><strong>实验设计</strong>：</p>
+<ul>
+<li>数据集：<strong>Million Playlist Dataset (MPD)</strong>，过滤掉缺 tag&#x2F;metadata 的歌、playlist &lt; 6 首的也去掉，8:1:1 切分；</li>
+<li>三种模态：<ul>
+<li><code>playlist</code>：歌曲共现训练 Word2Vec 拿协同信息；</li>
+<li><code>tag</code>：类别特征（流派等）；</li>
+<li><code>metadata</code>：文本特征，预训练 text encoder 抽 embedding；</li>
+</ul>
+</li>
+<li>每种模态独立 k-means 聚 1024 类作为该模态的 SID token；</li>
+<li>Latent token 词表大小 &#x3D; $3! &#x3D; 6$，每个 latent token <strong>绑定一种模态排列顺序</strong>。</li>
+</ul>
+<p><strong>结果（Table 5，Recall@10 &#x2F; NDCG@10）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th align="right">R@10</th>
+<th align="right">N@10</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><em>Fixed orders</em></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>playlist → tag → metadata</td>
+<td align="right">0.1966</td>
+<td align="right">0.1266</td>
+</tr>
+<tr>
+<td>playlist → metadata → tag</td>
+<td align="right">0.1972</td>
+<td align="right">0.1268</td>
+</tr>
+<tr>
+<td>tag → playlist → metadata</td>
+<td align="right">0.1948</td>
+<td align="right">0.1255</td>
+</tr>
+<tr>
+<td>tag → metadata → playlist</td>
+<td align="right">0.1939</td>
+<td align="right">0.1250</td>
+</tr>
+<tr>
+<td>metadata → playlist → tag</td>
+<td align="right">0.1933</td>
+<td align="right">0.1247</td>
+</tr>
+<tr>
+<td>metadata → tag → playlist</td>
+<td align="right">0.1942</td>
+<td align="right">0.1248</td>
+</tr>
+<tr>
+<td><em>Dynamic ordering (Latte)</em></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Agg &#x3D; max</td>
+<td align="right">0.2060</td>
+<td align="right">0.1335</td>
+</tr>
+<tr>
+<td><strong>Agg &#x3D; sum</strong></td>
+<td align="right"><strong>0.2107</strong></td>
+<td align="right"><strong>0.1353</strong></td>
+</tr>
+</tbody></table>
+<p><strong>关键观察（Figure 5，模型自己生成的 permutation 分布）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>Permutation</th>
+<th align="right">Frequency</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>playlist → metadata → tag</td>
+<td align="right"><strong>20.81%</strong></td>
+</tr>
+<tr>
+<td>playlist → tag → metadata</td>
+<td align="right"><strong>19.58%</strong></td>
+</tr>
+<tr>
+<td>tag → metadata → playlist</td>
+<td align="right">18.00%</td>
+</tr>
+<tr>
+<td>metadata → tag → playlist</td>
+<td align="right">15.70%</td>
+</tr>
+<tr>
+<td>tag → playlist → metadata</td>
+<td align="right">13.89%</td>
+</tr>
+<tr>
+<td>metadata → playlist → tag</td>
+<td align="right">12.02%</td>
+</tr>
+</tbody></table>
+<p><strong>Takeaway</strong>：</p>
+<ul>
+<li>Latte 自主选出的高频 permutation（playlist 在前的两种）<strong>恰好就是固定顺序里效果最好的两种</strong>；</li>
+<li>这意味着 latent token 可以<strong>数据驱动地</strong>自动发现最优 modality 顺序，省去人工启发式 &#x2F; 暴力枚举；</li>
+<li>这只是”把 latent token 当作归纳偏置载体”的一个例子，作者认为还能扩展到其它绑定方式（未来工作，或许可以试试重混排？）。</li>
+</ul>
+<h2 id="讨论"><a href="#讨论" class="headerlink"></a>讨论</h2><h3 id="1-语义相似的-item-为什么不应该有相关的生成概率？"><a href="#1-语义相似的-item-为什么不应该有相关的生成概率？" class="headerlink"></a>1. 语义相似的 item 为什么不应该有相关的生成概率？</h3><blockquote>
+<p>a. 即使是语义相似的 item，用户对它们的相对偏好也可能完全相反。GR 模型的前缀绑定让这种反转无法被表达——这跟”个性化推荐”的本质冲突。</p>
+<p>b. “语义相似”和”生成概率相关”是两件事。把相似 item 放在相近的 SID 上是合理设计，但<strong>让这种设计强制导致跨用户的概率高度相关</strong>就过头了。</p>
+</blockquote>
+<h3 id="2-这个问题到底有多普遍？是不是只在边角情况下出现"><a href="#2-这个问题到底有多普遍？是不是只在边角情况下出现" class="headerlink"></a>2. 这个问题到底有多普遍？是不是只在边角情况下出现?</h3><table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>树距离&#x3D;2 的邻居数</th>
+<th>树距离&#x3D;4 的邻居数</th>
+<th>至少有一个距离&#x3D;2 邻居的测试比例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Instruments</td>
+<td>6.29</td>
+<td>142.02</td>
+<td>83.98%</td>
+</tr>
+<tr>
+<td>Scientific</td>
+<td>7.39</td>
+<td>153.97</td>
+<td>85.25%</td>
+</tr>
+<tr>
+<td>Games</td>
+<td>6.98</td>
+<td>179.41</td>
+<td>84.17%</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>超过 80% 的测试样本，其 target item 都至少有一个距离&#x3D;2 的”耦合邻居”</strong>。也就是说，”前缀耦合”在实际推理中是<strong>普遍发生的现象</strong>，不是构造出来的 corner case。</p>
+</blockquote>
+<h3 id="3-Latent-token-这个设计是必要的吗？是最优的吗？"><a href="#3-Latent-token-这个设计是必要的吗？是最优的吗？" class="headerlink"></a>3. Latent token 这个设计是必要的吗？是最优的吗？</h3><blockquote>
+<p>“We do not claim that the latent token design in Latte is necessary or optimal.”</p>
+<p>“We view Latte as an initial attempt rather than a final solution.”</p>
+</blockquote>
+<h3 id="4-Latte-在什么情况下会退化回-base-model？"><a href="#4-Latte-在什么情况下会退化回-base-model？" class="headerlink"></a>4. Latte 在什么情况下会退化回 base model？</h3><blockquote>
+<p>“不同 latent token 是不是只相当于给同一个 SID 前缀加了不同权重？如果是，那 Latte 不就退化成 base + reweighting 了吗？”</p>
+<p><strong>关键在于 P(prefix | x, ℓ_A) ≠ P(prefix | x, ℓ_B)</strong>——条件分布本身就不同，不只是权重不同。所以 latent token 给的是”完整的另一条生成路径”，而不只是”同一条路径的不同权重”。</p>
+</blockquote>
+<h3 id="5-推理开销大不大？是不是要做-L-次-beam-search？"><a href="#5-推理开销大不大？是不是要做-L-次-beam-search？" class="headerlink"></a>5. 推理开销大不大？是不是要做 |L| 次 beam search？</h3><blockquote>
+<p><strong>只做一次 beam search</strong>，只是序列长度多了一位（先生成 latent，再生成 SID）</p>
+</blockquote>
+<h3 id="6-Latte-会不会只是因为引入噪声而提升性能？"><a href="#6-Latte-会不会只是因为引入噪声而提升性能？" class="headerlink"></a>6. Latte 会不会只是因为引入噪声而提升性能？</h3><blockquote>
+<p>“如果是 latent 是靠引入噪声降低过拟合起到的作用，那一些其它正则化操作也应该能复现收益。”</p>
+<p>作者实验发现：<strong>Dropout 和 Swap 不仅没有降低耦合度，反而往往让它更负（耦合更强）</strong>。只有 Latte 在两个维度上都同时改善：性能提升 + 耦合度降低。</p>
+</blockquote>
+<h2 id="反思"><a href="#反思" class="headerlink"></a>反思</h2><h4 id="1-生成式模型输出SID时会遇到义接近的Item被限制在相同概率空间内的情况，自回归生成Action时是否也会遇到类似的“表达能力受限于自回归模式”的问题？"><a href="#1-生成式模型输出SID时会遇到义接近的Item被限制在相同概率空间内的情况，自回归生成Action时是否也会遇到类似的“表达能力受限于自回归模式”的问题？" class="headerlink"></a>1. 生成式模型输出SID时会遇到义接近的Item被限制在相同概率空间内的情况，自回归生成Action时是否也会遇到类似的“表达能力受限于自回归模式”的问题？</h4><p>在逐Item&#x2F;Action自回归生成的过程中，前缀Token过长可能会导致共享前缀的信号占比过大，进而导致用户的个性信号无法有效表达，即被前缀信号主导塌缩成固定的输出模式。</p>
+<p>但是这个问题与论文讨论的本质不太一样。论文问的是”output 端的前缀如何压缩 item 间的区分度”，这里提出的新的问题是”input 端的前缀如何压缩 user 间的区分度”。共享前缀信号占比过大时，用户特异性是否会被稀释严重。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://baisen.site">Bolin Chen</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://baisen.site/2026/05/26/recommenders-Latte/">https://baisen.site/2026/05/26/recommenders-Latte/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://baisen.site" target="_blank">Baisen's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%8E%A8%E8%8D%90%E7%AE%97%E6%B3%95/">推荐算法</a><a class="post-meta__tags" href="/tags/%E7%94%9F%E6%88%90%E5%BC%8F/">生成式</a><a class="post-meta__tags" href="/tags/SID/">SID</a></div><div class="post_share"><div class="social-share" data-image="https://w.wallhaven.cc/full/5y/wallhaven-5y7rw3.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2026/05/25/recommenders-mpformer/"><img class="cover" src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/20260525000624207001.png" onerror="onerror=null;src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">MPFormer: Adaptive Framework for Industrial Multi-Task Personalized Sequential Retriever</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2026/05/24/recommenders-BLaIR/"><img class="cover" src="https://w.wallhaven.cc/full/ml/wallhaven-mlwxwk.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">BLaIR: Bridging Language and Items for Retrieval and Recommendation</div></div></a></div><div><a href="/2026/05/24/recommenders-DIEN/"><img class="cover" src="https://w.wallhaven.cc/full/rq/wallhaven-rqjrzq.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">DIEN: Deep Interest Evolution Network</div></div></a></div><div><a href="/2026/05/24/recommenders-DIN/"><img class="cover" src="https://w.wallhaven.cc/full/k8/wallhaven-k82dy7.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">DIN: Deep Interest Network</div></div></a></div><div><a href="/2026/05/24/recommenders-DSIN/"><img class="cover" src="https://w.wallhaven.cc/full/ly/wallhaven-lykljp.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">DSIN: Deep Session Interest Network for Click</div></div></a></div><div><a href="/2026/05/24/recommenders-FM/"><img class="cover" src="https://w.wallhaven.cc/full/xe/wallhaven-xejq2z.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">FM: Factorized Machine</div></div></a></div><div><a href="/2026/05/24/recommenders-PLE/"><img class="cover" src="https://w.wallhaven.cc/full/w5/wallhaven-w5lz97.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">PLE: Progressive Layered Extraction</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/Suguru.jpg" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Bolin Chen</div><div class="author-info__description">平芜尽处是春山</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">21</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">14</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/BaisenC"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">There's no announcements recently...</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Expressiveness-Limits-of-Autoregressive-Semantic-ID-Generation-in-Generative-Recommendation"><span class="toc-number">1.</span> <span class="toc-text">Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E4%BF%A1%E6%81%AF"><span class="toc-number">1.1.</span> <span class="toc-text">基本信息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-number">1.2.</span> <span class="toc-text">摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8E%E5%B7%B2%E6%9C%89%E5%B7%A5%E4%BD%9C%E5%85%B3%E7%B3%BB"><span class="toc-number">1.3.</span> <span class="toc-text">与已有工作关系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A0%94%E7%A9%B6%E5%8A%A8%E6%9C%BA"><span class="toc-number">1.4.</span> <span class="toc-text">研究动机</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%B0%E6%9C%89%E9%97%AE%E9%A2%98"><span class="toc-number">1.4.1.</span> <span class="toc-text">现有问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E4%B8%AA%E5%85%B3%E9%94%AE%E8%A7%82%E5%AF%9F"><span class="toc-number">1.4.2.</span> <span class="toc-text">三个关键观察</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E6%96%B9%E6%B3%95%EF%BC%9ALatte"><span class="toc-number">1.5.</span> <span class="toc-text">核心方法：Latte</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%AD%E7%BB%83"><span class="toc-number">1.5.1.</span> <span class="toc-text">训练</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%A8%E7%90%86"><span class="toc-number">1.5.2.</span> <span class="toc-text">推理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9B%B4%E8%A7%82%E8%A7%A3%E9%87%8A"><span class="toc-number">1.5.3.</span> <span class="toc-text">直观解释</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C"><span class="toc-number">1.6.</span> <span class="toc-text">实验</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%AE%9E%E9%AA%8C%E8%AE%BE%E7%BD%AE"><span class="toc-number">1.6.1.</span> <span class="toc-text">1. 实验设置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%B8%BB%E7%BB%93%E6%9E%9C%EF%BC%88Table-1%EF%BC%89"><span class="toc-number">1.6.2.</span> <span class="toc-text">2. 主结果（Table 1）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%BB%93%E6%9E%84%E7%BA%A6%E6%9D%9F%E5%88%86%E6%9E%90%EF%BC%88Table-2%EF%BC%8C%E5%85%B3%E9%94%AE%E8%AF%81%E6%8D%AE%EF%BC%89"><span class="toc-number">1.6.3.</span> <span class="toc-text">3. 结构约束分析（Table 2，关键证据）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E9%80%9A%E7%94%A8%E6%80%A7%EF%BC%9A%E8%B7%A8-Tokenizer%EF%BC%88Table-3%EF%BC%89"><span class="toc-number">1.6.4.</span> <span class="toc-text">4. 通用性：跨 Tokenizer（Table 3）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E8%81%9A%E5%90%88%E6%96%B9%E5%BC%8F%E6%B6%88%E8%9E%8D%EF%BC%88Table-4%EF%BC%8CNDCG-10%EF%BC%89"><span class="toc-number">1.6.5.</span> <span class="toc-text">5. 聚合方式消融（Table 4，NDCG@10）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-Latent-%E8%AF%8D%E8%A1%A8%E5%A4%A7%E5%B0%8F-M%E2%80%99-%EF%BC%88Figure-4%EF%BC%89"><span class="toc-number">1.6.6.</span> <span class="toc-text">6. Latent 词表大小 $M’$（Figure 4）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-Latent-Token-%E9%80%89%E6%8B%A9%E6%98%AF%E5%90%A6%E5%9D%87%E5%8C%80%EF%BC%88Appendix-Table-10%EF%BC%89"><span class="toc-number">1.6.7.</span> <span class="toc-text">7. Latent Token 选择是否均匀（Appendix Table 10）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-%E8%BF%9B%E9%98%B6%EF%BC%9A%E6%8A%8A-Latent-Token-%E7%BB%91%E5%AE%9A%E4%B8%BA%E5%BD%92%E7%BA%B3%E5%81%8F%E7%BD%AE%EF%BC%88Section-6%EF%BC%8C%E5%A4%9A%E6%A8%A1%E6%80%81%E5%AE%9E%E9%AA%8C%EF%BC%89"><span class="toc-number">1.6.8.</span> <span class="toc-text">8. 进阶：把 Latent Token 绑定为归纳偏置（Section 6，多模态实验）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA"><span class="toc-number">1.7.</span> <span class="toc-text">讨论</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E8%AF%AD%E4%B9%89%E7%9B%B8%E4%BC%BC%E7%9A%84-item-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E5%BA%94%E8%AF%A5%E6%9C%89%E7%9B%B8%E5%85%B3%E7%9A%84%E7%94%9F%E6%88%90%E6%A6%82%E7%8E%87%EF%BC%9F"><span class="toc-number">1.7.1.</span> <span class="toc-text">1. 语义相似的 item 为什么不应该有相关的生成概率？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E8%BF%99%E4%B8%AA%E9%97%AE%E9%A2%98%E5%88%B0%E5%BA%95%E6%9C%89%E5%A4%9A%E6%99%AE%E9%81%8D%EF%BC%9F%E6%98%AF%E4%B8%8D%E6%98%AF%E5%8F%AA%E5%9C%A8%E8%BE%B9%E8%A7%92%E6%83%85%E5%86%B5%E4%B8%8B%E5%87%BA%E7%8E%B0"><span class="toc-number">1.7.2.</span> <span class="toc-text">2. 这个问题到底有多普遍？是不是只在边角情况下出现?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-Latent-token-%E8%BF%99%E4%B8%AA%E8%AE%BE%E8%AE%A1%E6%98%AF%E5%BF%85%E8%A6%81%E7%9A%84%E5%90%97%EF%BC%9F%E6%98%AF%E6%9C%80%E4%BC%98%E7%9A%84%E5%90%97%EF%BC%9F"><span class="toc-number">1.7.3.</span> <span class="toc-text">3. Latent token 这个设计是必要的吗？是最优的吗？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-Latte-%E5%9C%A8%E4%BB%80%E4%B9%88%E6%83%85%E5%86%B5%E4%B8%8B%E4%BC%9A%E9%80%80%E5%8C%96%E5%9B%9E-base-model%EF%BC%9F"><span class="toc-number">1.7.4.</span> <span class="toc-text">4. Latte 在什么情况下会退化回 base model？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E6%8E%A8%E7%90%86%E5%BC%80%E9%94%80%E5%A4%A7%E4%B8%8D%E5%A4%A7%EF%BC%9F%E6%98%AF%E4%B8%8D%E6%98%AF%E8%A6%81%E5%81%9A-L-%E6%AC%A1-beam-search%EF%BC%9F"><span class="toc-number">1.7.5.</span> <span class="toc-text">5. 推理开销大不大？是不是要做 |L| 次 beam search？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-Latte-%E4%BC%9A%E4%B8%8D%E4%BC%9A%E5%8F%AA%E6%98%AF%E5%9B%A0%E4%B8%BA%E5%BC%95%E5%85%A5%E5%99%AA%E5%A3%B0%E8%80%8C%E6%8F%90%E5%8D%87%E6%80%A7%E8%83%BD%EF%BC%9F"><span class="toc-number">1.7.6.</span> <span class="toc-text">6. Latte 会不会只是因为引入噪声而提升性能？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E6%80%9D"><span class="toc-number">1.8.</span> <span class="toc-text">反思</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E7%94%9F%E6%88%90%E5%BC%8F%E6%A8%A1%E5%9E%8B%E8%BE%93%E5%87%BASID%E6%97%B6%E4%BC%9A%E9%81%87%E5%88%B0%E4%B9%89%E6%8E%A5%E8%BF%91%E7%9A%84Item%E8%A2%AB%E9%99%90%E5%88%B6%E5%9C%A8%E7%9B%B8%E5%90%8C%E6%A6%82%E7%8E%87%E7%A9%BA%E9%97%B4%E5%86%85%E7%9A%84%E6%83%85%E5%86%B5%EF%BC%8C%E8%87%AA%E5%9B%9E%E5%BD%92%E7%94%9F%E6%88%90Action%E6%97%B6%E6%98%AF%E5%90%A6%E4%B9%9F%E4%BC%9A%E9%81%87%E5%88%B0%E7%B1%BB%E4%BC%BC%E7%9A%84%E2%80%9C%E8%A1%A8%E8%BE%BE%E8%83%BD%E5%8A%9B%E5%8F%97%E9%99%90%E4%BA%8E%E8%87%AA%E5%9B%9E%E5%BD%92%E6%A8%A1%E5%BC%8F%E2%80%9D%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="toc-number">1.8.1.</span> <span class="toc-text">1. 生成式模型输出SID时会遇到义接近的Item被限制在相同概率空间内的情况，自回归生成Action时是否也会遇到类似的“表达能力受限于自回归模式”的问题？</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/05/26/recommenders-Latte/"><img src="https://w.wallhaven.cc/full/5y/wallhaven-5y7rw3.jpg" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="Latte: Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation"/></a><div class="content"><a class="title" href="/2026/05/26/recommenders-Latte/">Latte: Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation</a><time datetime="2026-05-25T17:19:13.000Z" title="发表于 2026-05-26 01:19:13">2026-05-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/25/recommenders-mpformer/"><img src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/20260525000624207001.png" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="MPFormer: Adaptive Framework for Industrial Multi-Task Personalized Sequential Retriever"/></a><div class="content"><a class="title" href="/2026/05/25/recommenders-mpformer/">MPFormer: Adaptive Framework for Industrial Multi-Task Personalized Sequential Retriever</a><time datetime="2026-05-24T16:03:07.000Z" title="发表于 2026-05-25 00:03:07">2026-05-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/24/recommenders-UniMixer/"><img src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/20260525000624185.png" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="UniMixer: A Unified Architecture for Scaling Laws in Recommendation Systems"/></a><div class="content"><a class="title" href="/2026/05/24/recommenders-UniMixer/">UniMixer: A Unified Architecture for Scaling Laws in Recommendation Systems</a><time datetime="2026-05-24T15:57:06.000Z" title="发表于 2026-05-24 23:57:06">2026-05-24</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/24/recommenders-reading-list/"><img src="https://w.wallhaven.cc/full/8x/wallhaven-8xg8jj.jpg" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="2026-05-推荐算法论文阅读清单"/></a><div class="content"><a class="title" href="/2026/05/24/recommenders-reading-list/">2026-05-推荐算法论文阅读清单</a><time datetime="2026-05-24T15:52:21.000Z" title="发表于 2026-05-24 23:52:21">2026-05-24</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/24/recommenders-FM/"><img src="https://w.wallhaven.cc/full/xe/wallhaven-xejq2z.png" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="FM: Factorized Machine"/></a><div class="content"><a class="title" href="/2026/05/24/recommenders-FM/">FM: Factorized Machine</a><time datetime="2026-05-24T13:32:39.000Z" title="发表于 2026-05-24 21:32:39">2026-05-24</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2026 By Bolin Chen</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a href="baisen.site">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=4.13.0"></script><script src="/js/main.js?v=4.13.0"></script><script src="/js/tw_cn.js?v=4.13.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.33/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"></div></div></body></html>
