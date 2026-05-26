@@ -87,29 +87,39 @@
   border-radius: 0 12px 12px 0 !important;
 }
 
-/* ---------- Playlist: round hover state, theme-aware ---------- */
+/* ---------- Playlist: kill all ugly borders + subtle hover/selected bg ---------- */
+/* Default APlayer: list container has 1px #eee border (visible white in dark mode);
+   each row has 1px #e9e9e9 border-top (I previously dyed it theme-blue, even uglier).
+   Strip both. Selected/hover bg: subtle alpha overlay, theme-flipped. */
 .aplayer.aplayer-fixed .aplayer-list {
   background: var(--card-bg) !important;
-  border-top-color: var(--hr-border) !important;
+  border: none !important;
 }
 
 .aplayer.aplayer-fixed .aplayer-list ol li {
   color: var(--font-color) !important;
-  border-top-color: var(--hr-border) !important;
+  border-top: none !important;
   transition: background 0.15s ease;
 }
 
-.aplayer.aplayer-fixed .aplayer-list ol li:hover {
-  background: var(--text-bg-hover) !important;
+.aplayer.aplayer-fixed .aplayer-list ol li:hover,
+.aplayer.aplayer-fixed .aplayer-list ol li.aplayer-list-light {
+  background: rgba(0, 0, 0, 0.04) !important;
 }
 
-.aplayer.aplayer-fixed .aplayer-list ol li.aplayer-list-light {
-  background: var(--text-bg-hover) !important;
+[data-theme="dark"] .aplayer.aplayer-fixed .aplayer-list ol li:hover,
+[data-theme="dark"] .aplayer.aplayer-fixed .aplayer-list ol li.aplayer-list-light {
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 
 .aplayer.aplayer-fixed .aplayer-list ol li .aplayer-list-author {
   color: var(--font-color) !important;
   opacity: 0.6;
+}
+
+/* The 3px theme-color vertical bar APlayer draws on the currently-playing row */
+.aplayer.aplayer-fixed .aplayer-list ol li .aplayer-list-cur {
+  display: none !important;
 }
 
 /* ---------- Lyrics: bump font, show more lines, theme-aware color ----------
@@ -140,4 +150,37 @@
    to a dark shadow so lines stay legible. */
 [data-theme="dark"] .aplayer.aplayer-fixed .aplayer-lrc {
   text-shadow: 1px 1px 0 #000, -1px -1px 0 #000 !important;
+}
+
+/* ---------- Mobile (≤640px): scale everything down a notch ---------- */
+@media (max-width: 640px) {
+  /* Smaller viewport margins */
+  .aplayer.aplayer-fixed,
+  .aplayer.aplayer-fixed .aplayer-body {
+    bottom: 10px !important;
+    left: 10px !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+
+  /* Title + author: ~1.5px smaller */
+  .aplayer.aplayer-fixed .aplayer-info .aplayer-title {
+    font-size: 13.5px !important;
+  }
+  .aplayer.aplayer-fixed .aplayer-info .aplayer-author {
+    font-size: 11.5px !important;
+  }
+
+  /* Lyrics: smaller font, fewer visible lines (88px → 60px container) */
+  .aplayer.aplayer-fixed .aplayer-lrc {
+    height: 60px !important;
+  }
+  .aplayer.aplayer-fixed .aplayer-lrc p {
+    font-size: 12.5px !important;
+    line-height: 18px !important;
+    height: 18px !important;
+  }
+  .aplayer.aplayer-fixed .aplayer-lrc p.aplayer-lrc-current {
+    font-size: 13.5px !important;
+    min-height: 18px !important;
+  }
 }
