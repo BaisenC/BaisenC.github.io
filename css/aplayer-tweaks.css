@@ -1,79 +1,85 @@
 /*
- * APlayer tweaks — match Butterfly's card visual language.
- * Strictly cosmetic, no DOM changes; all colors via Butterfly CSS tokens so
- * dark/light mode auto-follows the theme toggle.
+ * APlayer tweaks — minimal, safe overrides.
+ *
+ * Constraints (learned the hard way):
+ *   - APlayer's .aplayer-music has fixed height:20px + overflow:hidden.
+ *     Title font-size MUST stay ≤ 14px (default) or text gets vertically clipped.
+ *   - .aplayer-info is fixed 66px tall — don't tweak padding/margin globally.
+ *   - Only color + border-radius are safe to override.
  *
  * Loaded via themes/butterfly/_config.yml inject.head.
  */
 
 /* ---------- Container: rounded card, theme-following bg/shadow ---------- */
+/* Both the root AND the body are position:fixed; bottom:0 by default. Lift BOTH
+   by the same amount, otherwise the un-lifted one stays as a bg strip stuck to
+   the viewport bottom edge. */
 .aplayer.aplayer-fixed {
   border-radius: 12px !important;
+  overflow: hidden !important;
   background: var(--card-bg) !important;
   color: var(--font-color);
   box-shadow: var(--card-box-shadow);
-  overflow: hidden;
   transition: box-shadow 0.2s ease;
+  bottom: 16px !important;
+  left: 16px !important;
 }
 
 .aplayer.aplayer-fixed:hover {
   box-shadow: var(--card-hover-box-shadow);
 }
 
-/* ---------- Album art: rounded on the left side ---------- */
+.aplayer.aplayer-fixed .aplayer-body {
+  background: var(--card-bg) !important;
+  border-radius: 12px 0 0 12px;
+  bottom: 16px !important;
+  left: 16px !important;
+}
+
+/* Cover: round left corners only, right side meets the info panel */
 .aplayer.aplayer-fixed .aplayer-pic {
   border-radius: 12px 0 0 12px !important;
-  background-color: var(--text-bg-hover);
 }
 
-/* ---------- Info panel: title bigger, less top padding (subtitle 上提) ---------- */
-.aplayer.aplayer-fixed .aplayer-info {
-  padding: 6px 10px 8px 10px !important;
-  color: var(--font-color);
-}
-
+/* ---------- Title + Author: bump font size, expand container to match ---------- */
+/* APlayer default .aplayer-music is height:20px; widening to 24px to fit 15px text
+   safely, and shrinking margin-bottom by the same 4px so .aplayer-info stays 66px. */
 .aplayer.aplayer-fixed .aplayer-info .aplayer-music {
-  margin-bottom: 6px !important;
-  line-height: 1.35 !important;
+  height: 24px !important;
+  margin-bottom: 9px !important;
 }
 
 .aplayer.aplayer-fixed .aplayer-info .aplayer-title {
-  font-size: 15px !important;
-  font-weight: 600 !important;
   color: var(--font-color) !important;
-  letter-spacing: 0.1px;
+  font-weight: 600 !important;
+  font-size: 15px !important;
 }
 
 .aplayer.aplayer-fixed .aplayer-info .aplayer-author {
-  font-size: 12.5px !important;
   color: var(--font-color) !important;
-  opacity: 0.62;
-  margin-left: 2px;
+  opacity: 0.65;
+  font-size: 13px !important;
+}
+
+/* Kill APlayer's default light-blue top divider line */
+.aplayer.aplayer-fixed .aplayer-info {
+  border-top: none !important;
 }
 
 /* ---------- Time + controls follow theme ---------- */
-.aplayer.aplayer-fixed .aplayer-controller .aplayer-time {
+.aplayer.aplayer-fixed .aplayer-info .aplayer-controller .aplayer-time {
   color: var(--font-color) !important;
-  opacity: 0.68;
+  opacity: 0.7;
 }
 
-.aplayer.aplayer-fixed .aplayer-controller .aplayer-icon {
-  opacity: 0.72;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.aplayer.aplayer-fixed .aplayer-controller .aplayer-icon:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.aplayer.aplayer-fixed .aplayer-controller .aplayer-icon path {
+.aplayer.aplayer-fixed .aplayer-info .aplayer-controller .aplayer-icon path {
   fill: var(--font-color) !important;
+  opacity: 0.78;
+  transition: opacity 0.15s ease;
 }
 
-/* ---------- Progress bar thumb: subtle aura ---------- */
-.aplayer.aplayer-fixed .aplayer-controller .aplayer-bar-wrap .aplayer-bar .aplayer-played .aplayer-thumb {
-  box-shadow: 0 0 0 3px rgba(73, 177, 245, 0.2);
+.aplayer.aplayer-fixed .aplayer-info .aplayer-controller .aplayer-icon:hover path {
+  opacity: 1;
 }
 
 /* ---------- Native collapse arrow: round outer edge ---------- */
@@ -81,15 +87,16 @@
   border-radius: 0 12px 12px 0 !important;
 }
 
-/* ---------- Playlist: rounded hover state ---------- */
+/* ---------- Playlist: round hover state, theme-aware ---------- */
 .aplayer.aplayer-fixed .aplayer-list {
-  border-top: 1px solid var(--hr-border, rgba(0, 0, 0, 0.06)) !important;
+  background: var(--card-bg) !important;
+  border-top-color: var(--hr-border) !important;
 }
 
 .aplayer.aplayer-fixed .aplayer-list ol li {
-  padding: 7px 14px !important;
+  color: var(--font-color) !important;
+  border-top-color: var(--hr-border) !important;
   transition: background 0.15s ease;
-  border-top: none !important;
 }
 
 .aplayer.aplayer-fixed .aplayer-list ol li:hover {
@@ -105,7 +112,32 @@
   opacity: 0.6;
 }
 
-/* ---------- Lyric row (off via config) ---------- */
-.aplayer.aplayer-fixed .aplayer-lrc p.aplayer-lrc-current {
+/* ---------- Lyrics: bump font, show more lines, theme-aware color ----------
+   Keep APlayer's default position (bottom:10px floating ticker with text-shadow).
+   Container 30px → 88px lets ~4 lines show (current + 1-2 above/below dimmed).
+   Color via Butterfly token so dark mode auto-adapts. */
+.aplayer.aplayer-fixed .aplayer-lrc {
+  height: 88px !important;
+}
+
+.aplayer.aplayer-fixed .aplayer-lrc p {
+  font-size: 14px !important;
+  line-height: 20px !important;
+  height: 20px !important;
   color: var(--font-color) !important;
+  opacity: 0.5;
+}
+
+.aplayer.aplayer-fixed .aplayer-lrc p.aplayer-lrc-current {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  min-height: 20px !important;
+  color: var(--font-color) !important;
+  opacity: 1;
+}
+
+/* Default text-shadow is white-only (only works on light bg). In dark mode swap
+   to a dark shadow so lines stay legible. */
+[data-theme="dark"] .aplayer.aplayer-fixed .aplayer-lrc {
+  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000 !important;
 }
