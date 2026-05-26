@@ -21,7 +21,7 @@
         if (!Array.isArray(tracks) || tracks.length === 0) return;
         new APlayer({
           container: container,
-          fixed: true,
+          fixed: false,
           mini: false,
           autoplay: false,
           theme: '#5b8def',
@@ -31,7 +31,7 @@
           volume: 0.5,
           mutex: true,
           listFolded: true,
-          listMaxHeight: '340px',
+          listMaxHeight: '260px',
           lrcType: 0,
           audio: tracks,
         });
