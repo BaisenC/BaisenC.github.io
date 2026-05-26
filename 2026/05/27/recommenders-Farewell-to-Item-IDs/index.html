@@ -1,0 +1,1008 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Farewell to Item IDs: Unlocking the Scaling Potential of Large Ranking Models via Semantic Tokens | Baisen's Blog</title><meta name="author" content="Bolin Chen"><meta name="copyright" content="Bolin Chen"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="在判别式模型中将 item ID 完全替换为 semantic token，并解决&quot;替换后性能下降&quot;的三个根本原因：缺少协同信号、记忆能力不足、忽略 SID token 间结构。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Farewell to Item IDs: Unlocking the Scaling Potential of Large Ranking Models via Semantic Tokens">
+<meta property="og:url" content="https://baisen.site/2026/05/27/recommenders-Farewell-to-Item-IDs/index.html">
+<meta property="og:site_name" content="Baisen&#39;s Blog">
+<meta property="og:description" content="在判别式模型中将 item ID 完全替换为 semantic token，并解决&quot;替换后性能下降&quot;的三个根本原因：缺少协同信号、记忆能力不足、忽略 SID token 间结构。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://w.wallhaven.cc/full/e8/wallhaven-e8wrrr.jpg">
+<meta property="article:published_time" content="2026-05-26T18:47:52.000Z">
+<meta property="article:modified_time" content="2026-05-26T18:52:48.020Z">
+<meta property="article:author" content="Bolin Chen">
+<meta property="article:tag" content="SID">
+<meta property="article:tag" content="判别式">
+<meta property="article:tag" content="推荐算法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://w.wallhaven.cc/full/e8/wallhaven-e8wrrr.jpg"><link rel="shortcut icon" href="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/favicon.png"><link rel="canonical" href="https://baisen.site/2026/05/27/recommenders-Farewell-to-Item-IDs/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=4.13.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.33/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.11.1/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Farewell to Item IDs: Unlocking the Scaling Potential of Large Ranking Models via Semantic Tokens',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2026-05-27 02:52:48'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/mycss.css?v=1779598962406"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/Suguru.jpg" onerror="onerror=null;src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movie/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://w.wallhaven.cc/full/n6/wallhaven-n6zl7q.png')"><nav id="nav"><span id="blog-info"><a href="/"><span class="site-name">Baisen's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movie/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Farewell to Item IDs: Unlocking the Scaling Potential of Large Ranking Models via Semantic Tokens</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-05-26T18:47:52.000Z" title="发表于 2026-05-27 02:47:52">2026-05-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-05-26T18:52:48.020Z" title="更新于 2026-05-27 02:52:48">2026-05-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a></span></div><div class="meta-secondline"></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="farewell-to-item-ids-unlocking-the-scaling-potential-of-large-ranking-models-via-semantic-tokens"><a class="markdownIt-Anchor" href="#farewell-to-item-ids-unlocking-the-scaling-potential-of-large-ranking-models-via-semantic-tokens"></a> Farewell to Item IDs: Unlocking the Scaling Potential of Large Ranking Models via Semantic Tokens</h1>
+<h2 id="基本信息"><a class="markdownIt-Anchor" href="#基本信息"></a> 基本信息</h2>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>标题</strong></td>
+<td>Farewell to Item IDs: Unlocking the Scaling Potential of Large Ranking Models via Semantic Tokens</td>
+</tr>
+<tr>
+<td><strong>作者</strong></td>
+<td>Zhen Zhao, Tong Zhang, Jie Xu, Qingliang Cai, Qile Zhang, Leyuan Yang, Daorui Xiao, Xiaojia Chang</td>
+</tr>
+<tr>
+<td><strong>机构</strong></td>
+<td>ByteDance</td>
+</tr>
+<tr>
+<td><strong>年份</strong></td>
+<td>2026 (arXiv: 2601.22694v1, 2026-01-30)</td>
+</tr>
+<tr>
+<td><strong>方向</strong></td>
+<td>Large Ranking Model, Semantic Token, Scaling Law</td>
+</tr>
+<tr>
+<td><strong>场景</strong></td>
+<td>大规模搜索/推荐排序</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Item ID 在大规模排序模型里训练和维护都困难——新 item 存在冷启动问题，老 item 下线后既有知识无法保留；扩大 dense 网络也无法弥补 sparse 部分的不稳定。</p>
+<p>本文将 item ID 完全替换为 semantic token，并解决&quot;替换后性能下降&quot;的三个根本原因：缺少协同信号、记忆能力不足、忽略 token 间结构。</p>
+</blockquote>
+<hr />
+<h2 id="摘要"><a class="markdownIt-Anchor" href="#摘要"></a> 摘要</h2>
+<p>大规模排序模型依赖 item ID 维护 sparse 表，但 item 频繁上下架导致 embedding 训练不稳定、ID 下线后既有知识无法保留，限制了 dense 部分的 scaling 收益。直接将 ID 替换为现有的 semantic token，<strong>模型性能立即下降</strong>。</p>
+<p>作者提出 <strong>TRM (Token-based Recommendation Model)</strong>，定位为&quot;完全去除 item ID 的排序框架&quot;，通过三个设计补齐 semantic token 的不足：</p>
+<ol>
+<li><strong>协同感知的多模态表示</strong>：让 token 同时编码内容和用户行为信号；</li>
+<li><strong>混合 tokenization</strong>：gen-token 负责泛化 + BPE 生成的 mem-token 负责记忆；</li>
+<li><strong>判别 + 生成联合训练</strong>：通过辅助目标显式建模 token 间的结构信息。</li>
+</ol>
+<p>离线 CTR AUC +0.65%，sparse 存储 -33%；线上 A/B：搜索活跃天 +0.26%，换 query 率 -0.75%。</p>
+<h2 id="与已有工作关系"><a class="markdownIt-Anchor" href="#与已有工作关系"></a> 与已有工作关系</h2>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>代表工作</th>
+<th>与本文区别</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ID-based scaling</td>
+<td>Wukong, DHEN, RankMixer</td>
+<td>TRM 完全替换 ID，sparse 存储减少约 1/3</td>
+</tr>
+<tr>
+<td>Semantic ID for rec</td>
+<td>TIGER, SemID, OneRec</td>
+<td>这些 token 直接替换 ID 会导致性能下降，TRM 分析并解决了下降原因</td>
+</tr>
+<tr>
+<td>VQ tokenizer</td>
+<td>RQ-VAE, RQ-KMeans</td>
+<td>仅产生 atomic 单 token，TRM 在其上应用 BPE 给高频组合补充独立参数位</td>
+</tr>
+<tr>
+<td>生成式推荐</td>
+<td>OneRec, OneSearch</td>
+<td>它们用 token 做检索/生成，TRM 用 token 做排序，NTP 仅作为辅助目标</td>
+</tr>
+</tbody>
+</table>
+<h2 id="研究动机"><a class="markdownIt-Anchor" href="#研究动机"></a> 研究动机</h2>
+<h3 id="现有问题"><a class="markdownIt-Anchor" href="#现有问题"></a> 现有问题</h3>
+<ul>
+<li><strong>Item ID 不稳定</strong>：每天有新 item 冷启动、老 item 下线，embedding 分布持续漂移，dense 网络规模越大越难收敛；</li>
+<li><strong>直接替换 semantic token 导致性能下降</strong>：将 TIGER / OneRec / SemID 的 token 接入 RankMixer，整体 AUC 低于 ID baseline。</li>
+</ul>
+<h3 id="三个根本观察"><a class="markdownIt-Anchor" href="#三个根本观察"></a> 三个根本观察</h3>
+<ol>
+<li><strong>协同信号缺失</strong>：现有 semantic token 仅编码图像/文本/音频，缺少 user-action 维度——内容相似不等于消费模式相似；</li>
+<li><strong>记忆能力被牺牲</strong>：RQ 量化的每个 token 只编码 atomic 语义，<strong>token 之间的组合语义没有独立参数位</strong>（如&quot;cake + candle = birthday&quot;这种涌现含义只能由 dense 层隐式反推），泛化能力强但难以记忆老 item 的精细组合模式——Figure 3 显示创建时间越久的老 item 上性能下降越明显；</li>
+<li><strong>结构信息被忽略</strong>：现有方法将 token 序列 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mo stretchy="false">[</mo><msub><mi>s</mi><mn>1</mn></msub><mo separator="true">,</mo><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo separator="true">,</mo><msub><mi>s</mi><mi>n</mi></msub><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">s = [s_1, ..., s_n]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">s</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">.</span><span class="mord">.</span><span class="mord">.</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">]</span></span></span></span> 作为 bag-of-tokens 直接拼接输入 MLP/Transformer，<strong>未显式建模 token 之间的序列依赖</strong>（RQ 量化中第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord mathnormal">i</span></span></span></span> 层 token 是第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">i-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.74285em;vertical-align:-0.08333em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> 层残差的量化结果，位置之间天然存在层次关系）。本文使用辅助 NTP loss 促使模型学习这种依赖（Table 6 显示 NTP 显著优于 PE）。</li>
+</ol>
+<hr />
+<h2 id="核心方法-trm"><a class="markdownIt-Anchor" href="#核心方法-trm"></a> 核心方法 TRM</h2>
+<p>整体框架由三个模块串联构成：协同感知表示 → 混合 tokenization → 判别+生成联合训练。</p>
+<h3 id="1-协同感知的多模态表示"><a class="markdownIt-Anchor" href="#1-协同感知的多模态表示"></a> 1. 协同感知的多模态表示</h3>
+<p>将通用 MLLM（Qwen2.5-VL）改造为&quot;同时编码内容与用户行为&quot;的 item encoder，分两个阶段完成。</p>
+<h4 id="stage-1-in-domain-captioning"><a class="markdownIt-Anchor" href="#stage-1-in-domain-captioning"></a> Stage 1 — In-domain Captioning</h4>
+<p><strong>目的</strong>：使通用 MLLM 适应短视频业务域的视觉风格、内容多样性和语义密度。</p>
+<p><strong>输入序列</strong>（拼接为一个长 token 序列输入 MLLM）：</p>
+<table>
+<thead>
+<tr>
+<th>段</th>
+<th>具体内容</th>
+<th>Tokenization 方式</th>
+<th>是否计算 loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Prefix / Condition</strong></td>
+<td>视频帧 + 标题 + ASR（语音转文本）+ OCR（画面文字）+ 描述</td>
+<td>帧 → ViT 切 patch → visual token；文字 → text tokenizer → text token</td>
+<td>❌ 仅作为条件</td>
+</tr>
+<tr>
+<td><strong>Target</strong></td>
+<td>Caption — 从真实曝光日志中自采集的视频描述文本</td>
+<td>text tokenizer</td>
+<td>✅ 计算 NTP loss</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Loss</strong> — 标准 next-token prediction，<strong>仅在 caption 段上计算</strong>：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="script">L</mi><mtext>cap</mtext></msub><mo>=</mo><mo>−</mo><msub><mi mathvariant="double-struck">E</mi><mrow><mo stretchy="false">(</mo><mi>V</mi><mo separator="true">,</mo><mi>T</mi><mo stretchy="false">)</mo></mrow></msub><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mrow><mi mathvariant="normal">∣</mi><mi>T</mi><mi mathvariant="normal">∣</mi></mrow></munderover><mi>log</mi><mo>⁡</mo><mi>P</mi><mo stretchy="false">(</mo><msub><mi>t</mi><mi>k</mi></msub><mo>∣</mo><msub><mi>t</mi><mrow><mo>&lt;</mo><mi>k</mi></mrow></msub><mo separator="true">,</mo><mi>V</mi><mo separator="true">;</mo><mi>θ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{L}_{\text{cap}} = -\mathbb{E}_{(V, T)} \sum_{k=1}^{|T|} \log P(t_k \mid t_{&lt;k}, V; \theta)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">cap</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.2631180000000004em;vertical-align:-1.302113em;"></span><span class="mord">−</span><span class="mord"><span class="mord"><span class="mord mathbb">E</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.34480000000000005em;"><span style="top:-2.5198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight" style="margin-right:0.22222em;">V</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3551999999999999em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.961005em;"><span style="top:-1.8478869999999998em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.0500049999999996em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.386005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">∣</span><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span><span class="mord mtight">∣</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.302113em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∣</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999985em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mrel mtight">&lt;</span><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.17737em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="mclose">)</span></span></span></span></span></p>
+<p>其中 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span> 是视觉输入（图像 patch + metadata 文本），<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><msub><mi>t</mi><mn>1</mn></msub><mo separator="true">,</mo><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo separator="true">,</mo><msub><mi>t</mi><mrow><mi mathvariant="normal">∣</mi><mi>T</mi><mi mathvariant="normal">∣</mi></mrow></msub></mrow><annotation encoding="application/x-tex">T = t_1, ..., t_{|T|}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.9702799999999998em;vertical-align:-0.3551999999999999em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">.</span><span class="mord">.</span><span class="mord">.</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.34480000000000005em;"><span style="top:-2.5198em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">∣</span><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span><span class="mord mtight">∣</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3551999999999999em;"><span></span></span></span></span></span></span></span></span></span> 是 caption。</p>
+<p><strong>参数冻结情况</strong>：<strong>全参数 continue-pretrain</strong>，不冻结任何层（ViT、connector、LLM 全部更新）。</p>
+<h4 id="stage-2-collaborative-alignment"><a class="markdownIt-Anchor" href="#stage-2-collaborative-alignment"></a> Stage 2 — Collaborative Alignment</h4>
+<p><strong>目的</strong>：将用户行为信号注入 item embedding，使&quot;行为上协同相似的 item&quot;在表示空间中相互靠近。</p>
+<p><strong>输入序列</strong>：与 Stage 1 完全相同（视频 patch + 标题 + ASR + OCR + 描述），但<strong>不再生成 caption</strong>，而是将整段输入送入 MLLM 后取<strong>最后一层 Transformer 的所有 hidden state</strong> <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">{</mo><msub><mi mathvariant="bold">z</mi><mi>i</mi></msub><msubsup><mo stretchy="false">}</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></msubsup></mrow><annotation encoding="application/x-tex">\{\mathbf{z}_i\}_{i=1}^N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0999949999999998em;vertical-align:-0.258664em;"></span><span class="mopen">{</span><span class="mord"><span class="mord"><span class="mord mathbf">z</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose"><span class="mclose">}</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-2.441336em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.258664em;"><span></span></span></span></span></span></span></span></span></span>，通过 mean pooling 得到固定维度的 item embedding：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="bold">h</mi><mo>=</mo><mfrac><mn>1</mn><mi>N</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></munderover><msub><mi mathvariant="bold">z</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\mathbf{h} = \frac{1}{N} \sum_{i=1}^N \mathbf{z}_i
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord"><span class="mord mathbf">h</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.106005em;vertical-align:-1.277669em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.32144em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283360000000002em;"><span style="top:-1.872331em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.050005em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3000050000000005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.277669em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">z</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></p>
+<blockquote>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 是输入序列长度（视觉 token + metadata 文本 token 总数），每个位置在最后一层都对应一个 hidden state，mean pooling 将变长序列压缩为固定维度向量。</p>
+</blockquote>
+<p><strong>对比样本构造</strong>（共 <strong>2M item-item 对</strong>）：</p>
+<table>
+<thead>
+<tr>
+<th>对类型</th>
+<th>正例来源</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>query–item</td>
+<td>用户正反馈日志</td>
+<td>“在该 query 下，此 item 曾被正向消费”</td>
+</tr>
+<tr>
+<td>item–item</td>
+<td>高频共点击</td>
+<td>“这两个 item 经常被同一用户依次点击”</td>
+</tr>
+</tbody>
+</table>
+<p>负例：batch 内其它无关样本。</p>
+<p><strong>对比损失 InfoNCE</strong>：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="script">L</mi><mtext>align</mtext></msub><mo>=</mo><mo>−</mo><msub><mi mathvariant="double-struck">E</mi><mrow><mo stretchy="false">(</mo><mi>a</mi><mo separator="true">,</mo><mi>b</mi><mo stretchy="false">)</mo><mo>∈</mo><mi mathvariant="script">P</mi></mrow></msub><mi>log</mi><mo>⁡</mo><mfrac><mrow><mi>exp</mi><mo>⁡</mo><mo stretchy="false">(</mo><mtext>sim</mtext><mo stretchy="false">(</mo><msub><mi mathvariant="bold">h</mi><mi>a</mi></msub><mo separator="true">,</mo><msub><mi mathvariant="bold">h</mi><mi>b</mi></msub><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>τ</mi><mo stretchy="false">)</mo></mrow><mrow><munder><mo>∑</mo><mrow><msup><mi>b</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>∈</mo><mi mathvariant="script">B</mi></mrow></munder><mi>exp</mi><mo>⁡</mo><mo stretchy="false">(</mo><mtext>sim</mtext><mo stretchy="false">(</mo><msub><mi mathvariant="bold">h</mi><mi>a</mi></msub><mo separator="true">,</mo><msub><mi mathvariant="bold">h</mi><msup><mi>b</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup></msub><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>τ</mi><mo stretchy="false">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">\mathcal{L}_{\text{align}} = -\mathbb{E}_{(a,b) \in \mathcal{P}} \log \frac{\exp(\text{sim}(\mathbf{h}_a, \mathbf{h}_b)/\tau)}{\sum_{b&#x27; \in \mathcal{B}} \exp(\text{sim}(\mathbf{h}_a, \mathbf{h}_{b&#x27;})/\tau)}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361079999999999em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">align</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.44008em;vertical-align:-1.01308em;"></span><span class="mord">−</span><span class="mord"><span class="mord"><span class="mord mathbb">E</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.34480000000000005em;"><span style="top:-2.5198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight">a</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">b</span><span class="mclose mtight">)</span><span class="mrel mtight">∈</span><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.08222em;">P</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3551999999999999em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.18639799999999984em;"><span style="top:-2.40029em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6828285714285715em;"><span style="top:-2.786em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mrel mtight">∈</span><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.03041em;">B</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.32708000000000004em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">exp</span><span class="mopen">(</span><span class="mord text"><span class="mord">sim</span></span><span class="mopen">(</span><span class="mord"><span class="mord"><span class="mord mathbf">h</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">a</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">h</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6828285714285715em;"><span style="top:-2.786em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="mclose">)</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop">exp</span><span class="mopen">(</span><span class="mord text"><span class="mord">sim</span></span><span class="mopen">(</span><span class="mord"><span class="mord"><span class="mord mathbf">h</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">a</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">h</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.01308em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p><strong>Stage 2 总损失 = 保留 NTP captioning + 新增 InfoNCE</strong>：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="script">L</mi><mtext>rep</mtext></msub><mo>=</mo><msub><mi mathvariant="script">L</mi><mtext>cap</mtext></msub><mo>+</mo><msub><mi>λ</mi><mtext>align</mtext></msub><mo>⋅</mo><msub><mi mathvariant="script">L</mi><mtext>align</mtext></msub></mrow><annotation encoding="application/x-tex">\mathcal{L}_{\text{rep}} = \mathcal{L}_{\text{cap}} + \lambda_{\text{align}} \cdot \mathcal{L}_{\text{align}}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">rep</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">cap</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathnormal">λ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361079999999999em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">align</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361079999999999em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">align</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span></span></p>
+<p>Stage 2 保留 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="script">L</mi><mtext>cap</mtext></msub></mrow><annotation encoding="application/x-tex">\mathcal{L}_{\text{cap}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">cap</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> 的原因：</p>
+<ul>
+<li><strong>防止灾难性遗忘</strong>：仅使用对比损失训练会导致模型丧失 Stage 1 习得的视觉-语言理解能力，hidden state 退化为仅对协同信号敏感；</li>
+<li><strong>作为信息量正则</strong>：captioning 任务要求 hidden state 保留&quot;足以生成 caption 的细节&quot;，为对比学习提供<strong>信息量下限</strong>，防止表示塌缩到仅编码协同信号的低维子空间。</li>
+</ul>
+<p><strong>参数冻结情况</strong>：作者<strong>对比了冻结 Qwen 参数微调 vs 全参微调</strong>，结果显示<strong>全参微调显著优于冻结</strong>，因此最终选择全参可训练。</p>
+<p>最终 item 表示 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">h</mi></mrow><annotation encoding="application/x-tex">\mathbf{h}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord"><span class="mord mathbf">h</span></span></span></span></span> 同时编码多模态语义与用户行为协同，作为后续 RQ-KMeans 量化的输入向量。</p>
+<h4 id="两阶段对比一览"><a class="markdownIt-Anchor" href="#两阶段对比一览"></a> 两阶段对比一览</h4>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Stage 1</th>
+<th>Stage 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>输入 prefix</td>
+<td>视频 patch + metadata 文本</td>
+<td>视频 patch + metadata 文本（相同）</td>
+</tr>
+<tr>
+<td>输出形式</td>
+<td>自回归生成 caption</td>
+<td>取最后层 hidden state + mean pool 出 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">h</mi></mrow><annotation encoding="application/x-tex">\mathbf{h}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord"><span class="mord mathbf">h</span></span></span></span></span></td>
+</tr>
+<tr>
+<td>损失</td>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="script">L</mi><mtext>cap</mtext></msub></mrow><annotation encoding="application/x-tex">\mathcal{L}_{\text{cap}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">cap</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span>（NTP）</td>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="script">L</mi><mtext>cap</mtext></msub><mo>+</mo><msub><mi>λ</mi><mtext>align</mtext></msub><msub><mi mathvariant="script">L</mi><mtext>align</mtext></msub></mrow><annotation encoding="application/x-tex">\mathcal{L}_{\text{cap}} + \lambda_{\text{align}} \mathcal{L}_{\text{align}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">cap</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathnormal">λ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361079999999999em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">align</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361079999999999em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">align</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span>（NTP + InfoNCE）</td>
+</tr>
+<tr>
+<td>训练数据</td>
+<td>自采集 caption 数据</td>
+<td>2M item-item / query-item 对</td>
+</tr>
+<tr>
+<td>参数</td>
+<td>全参 continue-pretrain</td>
+<td>全参微调（实验证明优于冻结）</td>
+</tr>
+<tr>
+<td>目的</td>
+<td>注入业务域视觉语言知识</td>
+<td>注入用户行为协同信号</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-混合-tokenization-泛化与记忆的权衡"><a class="markdownIt-Anchor" href="#2-混合-tokenization-泛化与记忆的权衡"></a> 2. 混合 Tokenization — 泛化与记忆的权衡</h3>
+<h4 id="核心思路"><a class="markdownIt-Anchor" href="#核心思路"></a> 核心思路</h4>
+<p>判别式排序模型在用 SID 替换 ID 后，于高曝光老 item 上出现性能下降（Figure 3）。论文定位的真正原因是：<strong>RQ-KMeans 量化出的每个 token 只编码一种 atomic 语义</strong>——多个 token <strong>组合后的涌现语义</strong>（“cake + candle = birthday”、“咖啡 + 拉花 = 精品咖啡店”）只能由 dense 层从单 token embedding 的求和/拼接中<strong>隐式反推</strong>，<strong>缺少独立参数位直接学习</strong>。</p>
+<p>这恰好是 ID-based 模型在老 item 上的优势：每个 item 拥有一份独立 embedding，所有交互模式（包括组合模式）都直接积累于这一份参数中。</p>
+<p>TRM 的解法是将 NLP 的 <strong>subword tokenization</strong> 思路应用于 SID：用 BPE 在所有 item 的 gen-token 序列上<strong>自动提取高频共现组合</strong>，为每个高频组合分配独立的 mem-token 与独立 embedding——使组合语义可以<strong>像单 token 一样被直接学习</strong>，无需 dense 层反推。</p>
+<p>几个需要明确的要点：</p>
+<ul>
+<li><strong>mem-token 是 combination-specific，而非 item-specific</strong>：多个包含相同高频组合的 item 共享同一个 mem-token，与 item ID 的&quot;一物一码&quot;不同；</li>
+<li><strong>BPE 是数据驱动的</strong>：高频组合由算法自动提取，并非人工定义的 feature cross；</li>
+<li><strong>无法处理 corner case</strong>：gen-token 序列完全相同的两个 item，BPE 输出也相同，模型无法区分——但实际比例较低（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>409</mn><msup><mn>6</mn><mn>5</mn></msup><mo>≈</mo><mn>1</mn><msup><mn>0</mn><mn>18</mn></msup></mrow><annotation encoding="application/x-tex">4096^5 \approx 10^{18}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord">4</span><span class="mord">0</span><span class="mord">9</span><span class="mord"><span class="mord">6</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">5</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mord mtight">8</span></span></span></span></span></span></span></span></span></span></span></span> 个可能序列 vs <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.3</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mn>10</mn></msup></mrow><annotation encoding="application/x-tex">1.3 \times 10^{10}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span></span> 个 item），论文未单独讨论。</li>
+</ul>
+<h4 id="两类-token-对照"><a class="markdownIt-Anchor" href="#两类-token-对照"></a> 两类 token 对照</h4>
+<table>
+<thead>
+<tr>
+<th>Token 类型</th>
+<th>来源</th>
+<th>词表大小</th>
+<th>粒度</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>gen-token</strong></td>
+<td>RQ-KMeans 5 层 × 4096 残差量化</td>
+<td>20,480</td>
+<td>atomic 语义单元（类比&quot;字&quot;）</td>
+<td>泛化、共享</td>
+</tr>
+<tr>
+<td><strong>mem-token</strong></td>
+<td>gen-token 序列上应用 BPE 提取高频组合</td>
+<td>最多 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mn>7</mn></msup></mrow><annotation encoding="application/x-tex">2 \times 10^7</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">7</span></span></span></span></span></span></span></span></span></span></span></td>
+<td>组合语义单元（类比&quot;高频词组&quot;）</td>
+<td>记忆、补充组合粒度</td>
+</tr>
+</tbody>
+</table>
+<p>两类 token 使用不同 embedding，通过 <strong>Wide &amp; Deep</strong> 融合：</p>
+<ul>
+<li><strong>Deep 侧 — gen-token</strong>：经过 dense 网络实现泛化（附加 random dropout 以防过拟合）；</li>
+<li><strong>Wide 侧 — mem-token</strong>：直接接入 wide 线性侧实现记忆。</li>
+</ul>
+<p>这一设计正好对应 Wide &amp; Deep 原论文的设计意图——Wide 侧负责 memorization、Deep 侧负责 generalization。</p>
+<h3 id="3-判别-生成联合训练"><a class="markdownIt-Anchor" href="#3-判别-生成联合训练"></a> 3. 判别 + 生成联合训练</h3>
+<p>排序模型同时优化两个目标：</p>
+<p><strong>判别目标</strong>（主任务）— BCE 预测用户行为（ctr、like、real-play）：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="script">L</mi><mi>d</mi></msub><mo>=</mo><msub><mi mathvariant="double-struck">E</mi><mrow><mo stretchy="false">(</mo><msub><mi>X</mi><mi>Q</mi></msub><mo separator="true">,</mo><msub><mi>X</mi><mi>U</mi></msub><mo separator="true">,</mo><mi>Y</mi><mo stretchy="false">)</mo></mrow></msub><mtext>BCE</mtext><mo stretchy="false">(</mo><mi>Y</mi><mo separator="true">,</mo><mi>P</mi><mo stretchy="false">(</mo><mover accent="true"><mi>Y</mi><mo>^</mo></mover><mi mathvariant="normal">∣</mi><msub><mi>X</mi><mrow><mi>Q</mi><mo separator="true">,</mo><mi>U</mi><mo separator="true">,</mo><mi>I</mi></mrow></msub><mo separator="true">,</mo><msub><mi>θ</mi><mi>d</mi></msub><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{L}_d = \mathbb{E}_{(X_Q, X_U, Y)} \text{BCE}(Y, P(\hat{Y} | X_{Q,U,I}, \theta_d))
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.3244949999999998em;vertical-align:-0.3777249999999999em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">E</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.34479999999999994em;"><span style="top:-2.5198000000000005em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.07847em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.34479999999999994em;"><span style="top:-2.3567071428571427em;margin-left:-0.07847em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight">Q</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.28217857142857145em;"><span></span></span></span></span></span></span><span class="mpunct mtight">,</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.07847em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3567071428571427em;margin-left:-0.07847em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">U</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.14329285714285717em;"><span></span></span></span></span></span></span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.22222em;">Y</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3777249999999999em;"><span></span></span></span></span></span></span><span class="mord text"><span class="mord">BCE</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9467699999999999em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span></span></span><span style="top:-3.25233em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">^</span></span></span></span></span></span></span><span class="mord">∣</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.328331em;"><span style="top:-2.5500000000000003em;margin-left:-0.07847em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">Q</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.10903em;">U</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.07847em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mclose">)</span></span></span></span></span></p>
+<p><strong>生成目标</strong>（辅助任务）— Causal Transformer 用 NTP loss 预测目标 item 的 token 序列：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="script">L</mi><mi>g</mi></msub><mo>=</mo><mi mathvariant="double-struck">E</mi><mo stretchy="false">[</mo><mi>Y</mi><mo>=</mo><mn>1</mn><mo stretchy="false">]</mo><mo>⋅</mo><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>L</mi></munderover><mtext>CE</mtext><mo stretchy="false">(</mo><msub><mi>s</mi><mi>j</mi></msub><mo separator="true">,</mo><mi>P</mi><mo stretchy="false">(</mo><msub><mover accent="true"><mi>s</mi><mo>^</mo></mover><mi>j</mi></msub><mi mathvariant="normal">∣</mi><msub><mi>X</mi><mrow><mi>Q</mi><mo separator="true">,</mo><mi>U</mi><mo separator="true">,</mo><mi>I</mi></mrow></msub><mo separator="true">,</mo><msubsup><mi>s</mi><mrow><mo>&lt;</mo><mi>j</mi></mrow><mi>i</mi></msubsup><mo separator="true">,</mo><msub><mi>θ</mi><mi>g</mi></msub><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{L}_g = \mathbb{E}[Y=1] \cdot \sum_{j=1}^{L} \text{CE}(s_j, P(\hat{s}_j | X_{Q,U,I}, s_{&lt;j}^i, \theta_g))
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">g</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathbb">E</span></span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:3.2421130000000007em;vertical-align:-1.4137769999999998em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283360000000006em;"><span style="top:-1.872331em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.050005em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3000050000000005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">L</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.4137769999999998em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord text"><span class="mord">CE</span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">s</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.19444em;"><span class="mord">^</span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mord">∣</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.328331em;"><span style="top:-2.5500000000000003em;margin-left:-0.07847em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">Q</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.10903em;">U</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.07847em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.874664em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mrel mtight">&lt;</span><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span style="top:-3.1130000000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.383108em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">g</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mclose">)</span></span></span></span></span></p>
+<p>总损失：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="script">L</mi><mo>=</mo><msub><mi mathvariant="script">L</mi><mi>d</mi></msub><mo>+</mo><mi>λ</mi><mo>⋅</mo><msub><mi mathvariant="script">L</mi><mi>g</mi></msub><mo separator="true">,</mo><mspace width="1em"/><mi>λ</mi><mo>=</mo><mn>0.1</mn></mrow><annotation encoding="application/x-tex">\mathcal{L} = \mathcal{L}_d + \lambda \cdot \mathcal{L}_g, \quad \lambda = 0.1
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord"><span class="mord mathcal">L</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">g</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span><span class="mord">.</span><span class="mord">1</span></span></span></span></span></p>
+<p><strong>关键洞察</strong>：NTP loss 比 Positional Encoding 更有效地注入 token 序列的结构信息（Table 6 显示 PE 几乎无贡献，NTP 才是结构信号的真正来源）。</p>
+<hr />
+<h2 id="实验"><a class="markdownIt-Anchor" href="#实验"></a> 实验</h2>
+<h3 id="1-实验设置"><a class="markdownIt-Anchor" href="#1-实验设置"></a> 1. 实验设置</h3>
+<p><strong>数据</strong>：ByteDance 内部大规模视频搜索日志，包含三类信号：</p>
+<ul>
+<li><strong>Items</strong>：视频帧 + 标题 + ASR + OCR + 描述（去除 PII）；</li>
+<li><strong>Queries / Users</strong>：query 文本 + 用户历史交互；</li>
+<li><strong>Interactions</strong>：每条 query 下用户是否对 item 正反馈。</li>
+</ul>
+<p><strong>TRM 关键配置</strong>：</p>
+<ul>
+<li><strong>协同对齐</strong>：使用 <strong>2M item-item 对</strong>训练 Stage 2 Qwen2.5-VL；</li>
+<li><strong>Tokenizer</strong>：RQ-KMeans <strong>5 层 × 4096 码本</strong> = 20,480 个 gen-token；BPE 最多生成 <strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mn>7</mn></msup></mrow><annotation encoding="application/x-tex">2 \times 10^7</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">7</span></span></span></span></span></span></span></span></span></span></span> 个 mem-token</strong>（对比 ID 集 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.3</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mn>10</mn></msup></mrow><annotation encoding="application/x-tex">1.3 \times 10^{10}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span></span>，存储开销可忽略）；</li>
+<li><strong>联合训练</strong>：4 层 Causal Transformer，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>N</mi><mi>q</mi></msub><mo>=</mo><msub><mi>N</mi><mi>u</mi></msub><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">N_q = N_u = 2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-left:-0.10903em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">q</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10903em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">u</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span></span></span></span> context tokens，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo>=</mo><mn>0.1</mn></mrow><annotation encoding="application/x-tex">\lambda = 0.1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span><span class="mord">.</span><span class="mord">1</span></span></span></span> 平衡判别与生成目标。</li>
+</ul>
+<p><strong>基线</strong>（11 个）：</p>
+<ul>
+<li><strong>ID-based</strong>：DLRM-MLP（7M dense baseline）、DCN-v2、DHEN、Wukong、Pure Transformer、RankMixer；</li>
+<li><strong>Token-based</strong>：Tiger-token、OneRec-token、SemID — 全部应用于 RankMixer 上，保持网络超参一致，仅替换 token 来源。</li>
+</ul>
+<p><strong>指标</strong>：AUC、QAUC（query-level AUC，更适合排序场景）、Dense/Sparse 参数量、FLOPs（bs=4096）。</p>
+<p><strong>离线主要关注两个目标</strong>：CTR（点击率）、Real Play（观看 &gt;10 秒）。</p>
+<hr />
+<h3 id="2-主结果"><a class="markdownIt-Anchor" href="#2-主结果"></a> 2. 主结果</h3>
+<p>TRM 在性能和效率两端同时领先（11 个对照模型对比 DLRM-MLP baseline 的相对增益）：</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align:right">CTR AUC</th>
+<th style="text-align:right">CTR QAUC</th>
+<th style="text-align:right">RealPlay AUC</th>
+<th style="text-align:right">RealPlay QAUC</th>
+<th style="text-align:right">Dense</th>
+<th style="text-align:right">Sparse</th>
+<th style="text-align:right">FLOPs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DLRM-MLP (baseline)</td>
+<td style="text-align:right">0.8662</td>
+<td style="text-align:right">0.8826</td>
+<td style="text-align:right">0.8413</td>
+<td style="text-align:right">0.8604</td>
+<td style="text-align:right">7M</td>
+<td style="text-align:right">7.52T</td>
+<td style="text-align:right">0.13T</td>
+</tr>
+<tr>
+<td>DCN-v2</td>
+<td style="text-align:right">+0.08%</td>
+<td style="text-align:right">+0.06%</td>
+<td style="text-align:right">+0.15%</td>
+<td style="text-align:right">+0.10%</td>
+<td style="text-align:right">78M</td>
+<td style="text-align:right">7.52T</td>
+<td style="text-align:right">1.92T</td>
+</tr>
+<tr>
+<td>DHEN</td>
+<td style="text-align:right">+0.29%</td>
+<td style="text-align:right">+0.23%</td>
+<td style="text-align:right">+0.33%</td>
+<td style="text-align:right">+0.31%</td>
+<td style="text-align:right">242M</td>
+<td style="text-align:right">7.52T</td>
+<td style="text-align:right">8.42T</td>
+</tr>
+<tr>
+<td>Wukong</td>
+<td style="text-align:right">+0.44%</td>
+<td style="text-align:right">+0.38%</td>
+<td style="text-align:right">+0.59%</td>
+<td style="text-align:right">+0.45%</td>
+<td style="text-align:right">355M</td>
+<td style="text-align:right">7.52T</td>
+<td style="text-align:right">18.96T</td>
+</tr>
+<tr>
+<td>Pure Transformer</td>
+<td style="text-align:right">+0.56%</td>
+<td style="text-align:right">+0.46%</td>
+<td style="text-align:right">+0.69%</td>
+<td style="text-align:right">+0.56%</td>
+<td style="text-align:right">326M</td>
+<td style="text-align:right">7.52T</td>
+<td style="text-align:right">11.05T</td>
+</tr>
+<tr>
+<td>RankMixer (ID 最强)</td>
+<td style="text-align:right">+0.58%</td>
+<td style="text-align:right">+0.48%</td>
+<td style="text-align:right">+0.76%</td>
+<td style="text-align:right">+0.63%</td>
+<td style="text-align:right">335M</td>
+<td style="text-align:right"><strong>7.52T</strong></td>
+<td style="text-align:right">13.20T</td>
+</tr>
+<tr>
+<td>Tiger-token</td>
+<td style="text-align:right">+0.45%</td>
+<td style="text-align:right">+0.40%</td>
+<td style="text-align:right">+0.58%</td>
+<td style="text-align:right">+0.45%</td>
+<td style="text-align:right">338M</td>
+<td style="text-align:right">5.06T</td>
+<td style="text-align:right">13.89T</td>
+</tr>
+<tr>
+<td>OneRec-token</td>
+<td style="text-align:right">+0.53%</td>
+<td style="text-align:right">+0.45%</td>
+<td style="text-align:right">+0.64%</td>
+<td style="text-align:right">+0.54%</td>
+<td style="text-align:right">342M</td>
+<td style="text-align:right">5.06T</td>
+<td style="text-align:right">13.98T</td>
+</tr>
+<tr>
+<td>SemID (token 最强)</td>
+<td style="text-align:right">+0.56%</td>
+<td style="text-align:right">+0.47%</td>
+<td style="text-align:right">+0.75%</td>
+<td style="text-align:right">+0.61%</td>
+<td style="text-align:right">345M</td>
+<td style="text-align:right">5.06T</td>
+<td style="text-align:right">14.23T</td>
+</tr>
+<tr>
+<td><strong>TRM-Pure Transformer</strong></td>
+<td style="text-align:right">+0.61%</td>
+<td style="text-align:right">+0.53%</td>
+<td style="text-align:right">+0.81%</td>
+<td style="text-align:right">+0.68%</td>
+<td style="text-align:right">341M</td>
+<td style="text-align:right"><strong>5.07T</strong></td>
+<td style="text-align:right"><strong>12.17T</strong></td>
+</tr>
+<tr>
+<td><strong>TRM-RankMixer</strong></td>
+<td style="text-align:right"><strong>+0.65%</strong></td>
+<td style="text-align:right"><strong>+0.54%</strong></td>
+<td style="text-align:right"><strong>+0.85%</strong></td>
+<td style="text-align:right"><strong>+0.70%</strong></td>
+<td style="text-align:right">352M</td>
+<td style="text-align:right">5.07T</td>
+<td style="text-align:right">14.66T</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键 takeaway</strong>：</p>
+<ul>
+<li>Sparse 参数 7.52T → 5.07T，<strong>减少 32.6%</strong>（替换大量 item ID 带来的直接收益）；</li>
+<li>CTR AUC 较最强 ID baseline（RankMixer）进一步提升 0.07%，较最强 token baseline（SemID）提升 0.09%；</li>
+<li>现有 semantic token（Tiger-token、OneRec-token）单纯替换 ID 后<strong>整体 AUC 低于 RankMixer</strong>——验证&quot;直接替换导致性能下降&quot;的动机；</li>
+<li><strong>TRM-Pure Transformer 不依赖任何 feature cross 模块</strong>（仅由 transformer + token 嵌入构成）即可超越最强对照——表明&quot;全 token 架构&quot;具备可行性。</li>
+</ul>
+<hr />
+<h3 id="3-item-生命周期分析"><a class="markdownIt-Anchor" href="#3-item-生命周期分析"></a> 3. Item 生命周期分析</h3>
+<p><strong>问题</strong>：semantic token 在哪种 item 上性能下降最严重？</p>
+<p><strong>方法</strong>：按&quot;query 发起时间 − item 创建时间&quot;分桶（1 天到 &gt;7 天），观察各类 token 相对 ID baseline 的 AUC 增益曲线。</p>
+<table>
+<thead>
+<tr>
+<th>Query-Item 时间差</th>
+<th style="text-align:right">Hybrid Tokens (TRM)</th>
+<th style="text-align:right">OneRec-token</th>
+<th style="text-align:right">SemID</th>
+<th style="text-align:right">Tiger-token</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 day（新 item）</td>
+<td style="text-align:right">≈ +0.15%</td>
+<td style="text-align:right">≈ +0.12%</td>
+<td style="text-align:right">≈ +0.09%</td>
+<td style="text-align:right">≈ +0.08%</td>
+</tr>
+<tr>
+<td>2–3 days</td>
+<td style="text-align:right">≈ +0.10–0.12%</td>
+<td style="text-align:right">≈ +0.05%</td>
+<td style="text-align:right">≈ +0.03%</td>
+<td style="text-align:right">接近 0</td>
+</tr>
+<tr>
+<td>4–7 days</td>
+<td style="text-align:right">≈ +0.08–0.10%</td>
+<td style="text-align:right">0 ~ -0.02%</td>
+<td style="text-align:right">≈ -0.02%</td>
+<td style="text-align:right">≈ -0.03%</td>
+</tr>
+<tr>
+<td>&gt;7 days（老 item）</td>
+<td style="text-align:right">≈ +0.08%</td>
+<td style="text-align:right"><strong>-0.05%</strong></td>
+<td style="text-align:right">-0.04%</td>
+<td style="text-align:right">-0.05%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>结论</strong>：</p>
+<ul>
+<li>所有 semantic token 在新 item 上均优于 ID（语义泛化带来的收益）；</li>
+<li>但纯 semantic token <strong>随 item 变老近似线性退化</strong>，&gt;7 天后变为负值——粗粒度聚类无法捕获&quot;用户已习得的细节模式&quot;；</li>
+<li>TRM 的 Hybrid Token <strong>在整个生命周期内保持正增益</strong>，因为 mem-token 补充了高频组合的细粒度记忆。</li>
+</ul>
+<h4 id="为什么-request-time-create-time-越大-auc-gain-反而越差"><a class="markdownIt-Anchor" href="#为什么-request-time-create-time-越大-auc-gain-反而越差"></a> 为什么 request time − create time 越大 AUC gain 反而越差？</h4>
+<p>这条曲线展示的是<strong>相对增益</strong>，并非绝对性能。问题不是&quot;semantic token 自身性能变差&quot;，而是 <strong>ID baseline 在老 item 上的性能更强，导致相对差距反转</strong>。</p>
+<p><strong>参数化粒度对比</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>item ID</th>
+<th>纯 gen-token</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>参数化形式</td>
+<td>每个 item 一份独立 embedding</td>
+<td>5 个 atomic semantic token 的序列</td>
+</tr>
+<tr>
+<td>组合语义</td>
+<td>直接积累于 item embedding 中</td>
+<td>无独立参数位，由 dense 层从单 token 求和/拼接中隐式反推</td>
+</tr>
+<tr>
+<td>训练曲线</td>
+<td>起步慢（冷启动需训练），上限取决于&quot;该 item 自身的交互量&quot;</td>
+<td>起步快（共享先验），上限受&quot;组合参数化能力&quot;约束</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>新 item 端（time gap = 1 day）</strong>：ID embedding 训练步数有限，而 gen-token 继承了&quot;同语义簇 item 的历史经验&quot;——凭借先验显著领先，AUC 增益占优；</li>
+<li><strong>老 item 端（time gap &gt; 7 days）</strong>：ID 已经过大量交互训练，<strong>所有组合模式（特定 query × 特定用户群 × 特定内容组合）都积累于该 item 的独立 embedding 中</strong>；而 gen-token 系仍需 dense 层隐式反推组合，参数效率较低——ID 反超。</li>
+</ul>
+<p><strong>根本原因</strong>（参考论文 Sec 3.2）：</p>
+<blockquote>
+<p>“the simple aggregation (sum / concatenation, etc) of semantic meanings cannot substitute the combination of such meanings… semantic tokens cannot learn combinative knowledge of a certain item, leading to <strong>poor memorization capabilities in recommendation</strong>.”</p>
+</blockquote>
+<p>关键并非&quot;item 之间无法区分&quot;——RQ-KMeans 5 层 × 4096 码本理论上可产生 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>409</mn><msup><mn>6</mn><mn>5</mn></msup><mo>≈</mo><mn>1</mn><msup><mn>0</mn><mn>18</mn></msup></mrow><annotation encoding="application/x-tex">4096^5 \approx 10^{18}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord">4</span><span class="mord">0</span><span class="mord">9</span><span class="mord"><span class="mord">6</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">5</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mord mtight">8</span></span></span></span></span></span></span></span></span></span></span></span> 个序列，对 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.3</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mn>10</mn></msup></mrow><annotation encoding="application/x-tex">1.3 \times 10^{10}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mord">.</span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span></span> 个 item 而言<strong>完全相同序列的碰撞属于 corner case</strong>。真正的问题在于 <strong>token 组合涌现的语义缺少独立参数位</strong>，老 item 上用户已形成的精细行为模式大量来自此类组合。</p>
+<p><strong>TRM 的解决方案</strong>：BPE 在 gen-token 序列上自动提取高频共现组合，为每个高频组合分配独立的 mem-token 与独立 embedding，<strong>使组合语义被直接参数化</strong>。需要注意的是，mem-token 是 <strong>combination-specific</strong>（多个包含相同组合的 item 共享同一个 mem-token），并非为每个 item 分配独立 ID。因此 Hybrid Tokens 曲线全程保持在 0 以上。这也呼应 Table 2 中 “w/o Hybrid Token” 性能下降最严重（-0.09%）：移除该机制后即退化为纯 atomic token 的曲线。</p>
+<p>这是论文最具说服力的单一证据——直接证明了&quot;semantic token 缺乏组合记忆&quot;是实际存在的问题，而 hybrid tokenization 是有效的解决方案。</p>
+<hr />
+<h3 id="4-scaling-law-对比"><a class="markdownIt-Anchor" href="#4-scaling-law-对比"></a> 4. Scaling Law 对比</h3>
+<p>将 dense 网络扩展到不同规模（参数 / FLOPs 两个维度），观察 qAUC 增益曲线：</p>
+<table>
+<thead>
+<tr>
+<th>Dense Param</th>
+<th style="text-align:right">TRM-RankMixer</th>
+<th style="text-align:right">SemID</th>
+<th style="text-align:right">ID-based RankMixer</th>
+<th style="text-align:right">Wukong</th>
+<th style="text-align:right">DHEN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>~ 100M</td>
+<td style="text-align:right">≈ +0.40%</td>
+<td style="text-align:right">≈ +0.35%</td>
+<td style="text-align:right">≈ +0.35%</td>
+<td style="text-align:right">≈ +0.30%</td>
+<td style="text-align:right">≈ +0.20%</td>
+</tr>
+<tr>
+<td>~ 500M</td>
+<td style="text-align:right">≈ +0.60%</td>
+<td style="text-align:right">≈ +0.55%</td>
+<td style="text-align:right">≈ +0.50%</td>
+<td style="text-align:right">≈ +0.50%</td>
+<td style="text-align:right">≈ +0.35%</td>
+</tr>
+<tr>
+<td><strong>1888M（最大）</strong></td>
+<td style="text-align:right"><strong>+0.75%</strong></td>
+<td style="text-align:right">+0.68%</td>
+<td style="text-align:right">+0.60%</td>
+<td style="text-align:right">+0.55%</td>
+<td style="text-align:right">+0.42%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键观察</strong>：</p>
+<ul>
+<li><strong>TRM-RankMixer 曲线最陡</strong>：参数 / FLOPs 翻倍带来的边际收益最大，未出现饱和迹象；</li>
+<li><strong>ID-based 模型较早饱和</strong>：Wukong 在 ~1.9B 时停在 +0.55%，DHEN 在 1.17B / 49.75T FLOPs 时停在 +0.42%；</li>
+<li>token-based 模型的 dense 容量被更高效利用——sparse 已压缩为小闭合集，dense 可集中学习高阶交互。</li>
+</ul>
+<p><strong>理论解释</strong>（附录 A.1）：</p>
+<ul>
+<li>标准 scaling law 形式 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">L</mi><mo stretchy="false">(</mo><mi>N</mi><mo stretchy="false">)</mo><mo>≈</mo><msub><mi mathvariant="script">L</mi><mi mathvariant="normal">∞</mi></msub><mo>+</mo><mi>A</mi><msup><mi>N</mi><mrow><mo>−</mo><mi>β</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\mathcal{L}(N) \approx \mathcal{L}_\infty + AN^{-\beta}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathcal">L</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord mathcal">L</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">∞</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.8491079999999999em;vertical-align:0em;"></span><span class="mord mathnormal">A</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathnormal mtight" style="margin-right:0.05278em;">β</span></span></span></span></span></span></span></span></span></span></span></span>；</li>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi><mo>≈</mo><mn>2</mn><mi>s</mi><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mi>s</mi><mo>+</mo><msub><mi>d</mi><mtext>eff</mtext></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\beta \approx 2s / (2s + d_{\text{eff}})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">2</span><span class="mord mathnormal">s</span><span class="mord">/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathnormal">s</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">eff</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">s</span></span></span></span> 是 CTR 函数的 smoothness，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mtext>eff</mtext></msub></mrow><annotation encoding="application/x-tex">d_{\text{eff}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">eff</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 是 effective dimension；</li>
+<li>Token 表示相比 ID <strong>更 smooth、effective dim 更小</strong>，因此 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>β</mi><mtext>tok</mtext></msub><mo>&gt;</mo><msub><mi>β</mi><mtext>id</mtext></msub></mrow><annotation encoding="application/x-tex">\beta_{\text{tok}} &gt; \beta_{\text{id}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.05278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">tok</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.05278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">id</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，曲线斜率更大。</li>
+</ul>
+<hr />
+<h3 id="5-消融实验"><a class="markdownIt-Anchor" href="#5-消融实验"></a> 5. 消融实验</h3>
+<h4 id="51-三大组件缺一不可"><a class="markdownIt-Anchor" href="#51-三大组件缺一不可"></a> 5.1 三大组件缺一不可</h4>
+<table>
+<thead>
+<tr>
+<th>去掉</th>
+<th style="text-align:right">CTR AUC 变化</th>
+<th style="text-align:right">CTR QAUC 变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>w/o Col-Align（协同对齐）</td>
+<td style="text-align:right">-0.05%</td>
+<td style="text-align:right">-0.03%</td>
+</tr>
+<tr>
+<td><strong>w/o Hybrid Token（混合 token）</strong></td>
+<td style="text-align:right"><strong>-0.09%</strong></td>
+<td style="text-align:right"><strong>-0.07%</strong></td>
+</tr>
+<tr>
+<td>w/o Aux.NTP（生成目标）</td>
+<td style="text-align:right">-0.05%</td>
+<td style="text-align:right">-0.05%</td>
+</tr>
+</tbody>
+</table>
+<p>混合 tokenization 贡献最大——再次验证&quot;记忆能力&quot;是 semantic token 缺失的关键环节。</p>
+<h4 id="52-mem-token-数量与-item-寿命"><a class="markdownIt-Anchor" href="#52-mem-token-数量与-item-寿命"></a> 5.2 Mem-token 数量与 item 寿命</h4>
+<table>
+<thead>
+<tr>
+<th>Item 寿命</th>
+<th style="text-align:right">5M</th>
+<th style="text-align:right">10M</th>
+<th style="text-align:right">15M</th>
+<th style="text-align:right">20M</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&lt; 1 day（新 item）</td>
+<td style="text-align:right">+0.03%</td>
+<td style="text-align:right">+0.04%</td>
+<td style="text-align:right">+0.06%</td>
+<td style="text-align:right">+0.06%</td>
+</tr>
+<tr>
+<td>1–7 days</td>
+<td style="text-align:right">+0.03%</td>
+<td style="text-align:right">+0.07%</td>
+<td style="text-align:right">+0.07%</td>
+<td style="text-align:right">+0.08%</td>
+</tr>
+<tr>
+<td>&gt; 7 days（老 item）</td>
+<td style="text-align:right">+0.04%</td>
+<td style="text-align:right">+0.09%</td>
+<td style="text-align:right">+0.09%</td>
+<td style="text-align:right"><strong>+0.13%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>两个结论：</p>
+<ul>
+<li><strong>mem-token 增多对老 item 收益最大</strong>——印证 mem-token 主要承担记忆补充作用；</li>
+<li><strong>15M → 20M 仅提升 +0.02%</strong>，收益接近饱和，部署时无需进一步扩展。</li>
+</ul>
+<h4 id="53-ntp-loss-的贡献来自-loss-而非额外参数"><a class="markdownIt-Anchor" href="#53-ntp-loss-的贡献来自-loss-而非额外参数"></a> 5.3 NTP loss 的贡献来自 loss 而非额外参数</h4>
+<p>辅助 Transformer 在不引入 NTP 的情况下，仅增加参数和 FLOPs 几乎没有收益：</p>
+<table>
+<thead>
+<tr>
+<th>Aux Transformer</th>
+<th style="text-align:right">w/ NTP loss QAUC</th>
+<th style="text-align:right">w/o NTP loss QAUC</th>
+<th style="text-align:right">额外 Param</th>
+<th style="text-align:right">额外 FLOPs/Batch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2 blocks</td>
+<td style="text-align:right">+0.03%</td>
+<td style="text-align:right">+0.00%</td>
+<td style="text-align:right">+32M / +27M</td>
+<td style="text-align:right">+0.73T / +0.68T</td>
+</tr>
+<tr>
+<td>4 blocks</td>
+<td style="text-align:right"><strong>+0.05%</strong></td>
+<td style="text-align:right">+0.01%</td>
+<td style="text-align:right">+54M / +48M</td>
+<td style="text-align:right">+1.26T / +1.19T</td>
+</tr>
+</tbody>
+</table>
+<p><strong>结论</strong>：移除 NTP loss 后 QAUC 从 +0.05% 降至 +0.01%——<strong>生成目标本身是增益的真正来源</strong>，而非额外参数。NTP loss 仅增加 1.7% dense param、0.5% extra FLOPs/Batch，开销几乎可忽略。</p>
+<h4 id="54-ntp-loss-vs-positional-encoding"><a class="markdownIt-Anchor" href="#54-ntp-loss-vs-positional-encoding"></a> 5.4 NTP loss vs Positional Encoding</h4>
+<p>直接对比&quot;用 NTP 注入结构信号&quot; vs “用 PE 注入结构信号”：</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th style="text-align:right">AUC</th>
+<th style="text-align:right">QAUC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NTP loss</td>
+<td style="text-align:right">+0.05%</td>
+<td style="text-align:right">+0.05%</td>
+</tr>
+<tr>
+<td>PE only</td>
+<td style="text-align:right">+0.02%</td>
+<td style="text-align:right">+0.01%</td>
+</tr>
+<tr>
+<td>NTP loss + PE</td>
+<td style="text-align:right">+0.05%</td>
+<td style="text-align:right">+0.05%</td>
+</tr>
+</tbody>
+</table>
+<p>PE 几乎无贡献，且<strong>叠加 PE 后并未进一步提升 NTP 的增益</strong>——结构信号需要通过生成目标显式建模，仅告知模型&quot;token 的位置&quot;远不足以学习序列依赖，必须让模型<strong>预测下一个 token</strong> 才能将序列依赖编码到 dense 参数中。</p>
+<h4 id="55-bpe-vs-其它组合策略"><a class="markdownIt-Anchor" href="#55-bpe-vs-其它组合策略"></a> 5.5 BPE vs 其它组合策略</h4>
+<p>相对 1-gram baseline（即只用 gen-token、不做组合）的提升：</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th style="text-align:right">AUC</th>
+<th style="text-align:right">QAUC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BPE</strong></td>
+<td style="text-align:right"><strong>+0.09%</strong></td>
+<td style="text-align:right"><strong>+0.07%</strong></td>
+</tr>
+<tr>
+<td>2-gram</td>
+<td style="text-align:right">+0.02%</td>
+<td style="text-align:right">+0.02%</td>
+</tr>
+<tr>
+<td>Prefix-ngram（SemID 用的方式）</td>
+<td style="text-align:right">+0.05%</td>
+<td style="text-align:right">+0.03%</td>
+</tr>
+</tbody>
+</table>
+<p>BPE 的动态合并优于固定 2-gram、固定前缀 ngram——<strong>数据驱动地筛选真正高频共现的组合</strong>，机械组合会引入大量低频无效 token 稀释信号。</p>
+<hr />
+<h3 id="6-线上-ab-实验"><a class="markdownIt-Anchor" href="#6-线上-ab-实验"></a> 6. 线上 A/B 实验</h3>
+<p>将 ByteDance 搜索引擎线上的 7M DLRM 替换为 TRM-RankMixer-352M（先经离线验证 QAUC +0.54%）：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th style="text-align:right">Overall</th>
+<th style="text-align:right">低活</th>
+<th style="text-align:right">中活</th>
+<th style="text-align:right">高活</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Search Active Days ↑</td>
+<td style="text-align:right">+0.26%</td>
+<td style="text-align:right">+0.27%</td>
+<td style="text-align:right">+0.26%</td>
+<td style="text-align:right">+0.22%</td>
+</tr>
+<tr>
+<td>Change Query Ratio ↓</td>
+<td style="text-align:right">-0.75%</td>
+<td style="text-align:right">-0.81%</td>
+<td style="text-align:right">-0.68%</td>
+<td style="text-align:right">-0.69%</td>
+</tr>
+<tr>
+<td>Strict CTR ↑</td>
+<td style="text-align:right">+0.39%</td>
+<td style="text-align:right">+0.36%</td>
+<td style="text-align:right">+0.31%</td>
+<td style="text-align:right">+0.40%</td>
+</tr>
+<tr>
+<td>Like ↑</td>
+<td style="text-align:right">+1.51%</td>
+<td style="text-align:right">+1.83%</td>
+<td style="text-align:right">+1.21%</td>
+<td style="text-align:right">+1.20%</td>
+</tr>
+<tr>
+<td>Comment ↑</td>
+<td style="text-align:right">+1.80%</td>
+<td style="text-align:right">+2.02%</td>
+<td style="text-align:right">+1.69%</td>
+<td style="text-align:right">+1.59%</td>
+</tr>
+</tbody>
+</table>
+<p>全部显著（p &lt; 0.05），<strong>低活用户收益最大</strong>——冷启动场景对 ID 不稳定最敏感，token 替换带来的提升也最显著。</p>
+<h4 id="用户主观调研"><a class="markdownIt-Anchor" href="#用户主观调研"></a> 用户主观调研</h4>
+<p>15 个真人盲评 462 条 query 页：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th style="text-align:right">TRM 相对原系统</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Item Quality</td>
+<td style="text-align:right">+0.86%</td>
+</tr>
+<tr>
+<td>Query-Item Relevance</td>
+<td style="text-align:right">+0.34%</td>
+</tr>
+<tr>
+<td>Content Satisfactory</td>
+<td style="text-align:right">+0.92%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>线上与离线数据一致</strong>：客观点击率提升、主观感受同步改善。</p>
+<hr />
+<h2 id="讨论"><a class="markdownIt-Anchor" href="#讨论"></a> 讨论</h2>
+<h3 id="1-为什么-id-based-scaling-会饱和而-token-based-不会"><a class="markdownIt-Anchor" href="#1-为什么-id-based-scaling-会饱和而-token-based-不会"></a> 1. 为什么 ID-based scaling 会饱和而 token-based 不会？</h3>
+<p>论文附录 A.1 给的是理论解释：开放集 ID embedding 在长尾频次和 churn（新增 / 退役）下会<strong>注入表示噪声、削弱跨样本共享</strong>，导致 effective dimension <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mtext>eff</mtext></msub></mrow><annotation encoding="application/x-tex">d_{\text{eff}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">eff</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 变大、effective smoothness <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">s</span></span></span></span> 变小，scaling 指数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi><mo>≈</mo><mn>2</mn><mi>s</mi><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mi>s</mi><mo>+</mo><msub><mi>d</mi><mtext>eff</mtext></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\beta \approx 2s / (2s + d_{\text{eff}})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">2</span><span class="mord mathnormal">s</span><span class="mord">/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathnormal">s</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">eff</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> 自然变小。而 semantic token 是闭合集（codebook 固定），多个 item 复用 token，<strong>表示集中在低复杂度子空间</strong>，谱衰减快、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mtext>eff</mtext></msub></mrow><annotation encoding="application/x-tex">d_{\text{eff}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">eff</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 小、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">s</span></span></span></span> 大，scaling 曲线更陡。Figure 1 的 norm variance 实验也能侧面印证：token embedding 分布比 ID embedding 稳定得多。</p>
+<h3 id="2-为什么-gen-token-单独使用会导致性能下降"><a class="markdownIt-Anchor" href="#2-为什么-gen-token-单独使用会导致性能下降"></a> 2. 为什么 gen-token 单独使用会导致性能下降？</h3>
+<p>RQ-KMeans 量化出的每个 gen-token 仅编码一种 atomic 语义。组合语义（cake + candle → birthday）<strong>缺少独立参数位</strong>，dense 层只能从单 token embedding 的求和/拼接中<strong>隐式反推</strong>——参数效率较低。</p>
+<p>老 item 上用户已形成的精细行为模式大量来自此类组合，ID-based 模型为每个 item 提供独立 embedding 直接覆盖了这种组合；纯 gen-token 不具备这一能力，因此性能不及 ID。Figure 3 显示曝光 1 天内的 item 收益 +0.15%，至 7 天后降至 -0.05%。</p>
+<h3 id="3-为什么-bpe-优于-prefix-ngram"><a class="markdownIt-Anchor" href="#3-为什么-bpe-优于-prefix-ngram"></a> 3. 为什么 BPE 优于 prefix-ngram？</h3>
+<p>BPE 是数据驱动的动态合并，仅将<strong>真正高频共现</strong>的 token 组合提升为 mem-token；prefix-ngram 和固定 2-gram 是机械组合，会将大量低频无意义的组合也转化为独立 token，从而稀释信号。</p>
+<h3 id="4-为什么生成目标仅作为辅助-不直接用于生成检索"><a class="markdownIt-Anchor" href="#4-为什么生成目标仅作为辅助-不直接用于生成检索"></a> 4. 为什么生成目标仅作为辅助、不直接用于生成检索？</h3>
+<p>排序模型的输出必须是判别概率 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>Y</mi><mo>=</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(Y=1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span>，生成目标仅作辅助使用——通过 NTP 将 token 序列的依赖关系编码到 dense 参数中。<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo>=</mo><mn>0.1</mn></mrow><annotation encoding="application/x-tex">\lambda = 0.1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span><span class="mord">.</span><span class="mord">1</span></span></span></span> 也表明它是辅助而非主要目标。这与 OneRec/OneSearch&quot;以生成作为主任务&quot;的范式方向相反。</p>
+<h3 id="5-将-bpe-这类-nlp-tokenizer-思路应用于-sid-是否合理"><a class="markdownIt-Anchor" href="#5-将-bpe-这类-nlp-tokenizer-思路应用于-sid-是否合理"></a> 5. 将 BPE 这类 NLP tokenizer 思路应用于 SID 是否合理？</h3>
+<p>作者将 token 序列类比为&quot;item 的子词描述&quot;，“cake + candle = birthday&quot;这一比喻在 paper Sec 3.2 中反复强调。Table 5 显示 BPE 显著优于固定 2-gram、prefix-ngram；Figure 5 显示 mem-token 数量到 15M–20M 才接近饱和——这些数据支持&quot;数据驱动的动态合并&quot;优于&quot;机械组合”。</p>
+<p>但 NLP 类比存在边界：NLP subword 词表通常 30K–100K，TRM 的 gen-token 词表为 20,480；NLP 字符 vocabulary 是天然离散的语义单位，而 RQ-KMeans 的 atomic token 是几何聚类产物，<strong>语义可解释性远低于 NLP subword</strong>。因此这一类比把握的是&quot;统计高频组合&quot;的方法论，而非&quot;语义结构对齐&quot;的强保证。</p>
+<h3 id="6-为什么-request-time-create-time-越大-semantic-token-反而性能越差"><a class="markdownIt-Anchor" href="#6-为什么-request-time-create-time-越大-semantic-token-反而性能越差"></a> 6. 为什么 “request time − create time” 越大、semantic token 反而性能越差？</h3>
+<p>这条曲线表面上违反直觉——通常认为&quot;老 item 数据多、模型应当更准确&quot;，为何 semantic token 反而表现下降？理解的关键在于：<strong>这是相对增益，参照基线是 ID baseline 自身</strong>。</p>
+<p>两套系统<strong>对组合语义的参数化方式根本不同</strong>：</p>
+<ul>
+<li><strong>item ID 是 item-specific 的可学习参数位</strong>：初始时 embedding 接近随机向量（冷启动），但每次交互都会更新，<strong>该 item 的所有交互模式——包括各类组合模式——都直接积累于这一份独立 embedding 中</strong>。上限是&quot;通过大量行为为该 item 建立精细的特征表征&quot;。</li>
+<li><strong>纯 gen-token 是 atomic 语义单元的拼接</strong>：初始即可借助&quot;同语义簇 item 的历史经验&quot;作为先验，对冷启动友好；但 <strong>token 间的组合涌现语义缺少独立参数位</strong>——dense 层必须从单 token embedding 的求和/拼接中反推。即使某 item 被点击数百万次，模型也只能通过 dense 容量逼近这种组合，参数效率较低。</li>
+</ul>
+<p>由此出现&quot;早期 gen-token 占优（冷启动依赖迁移）、晚期 ID 占优（精细组合模式依赖 item-specific 参数容量）&quot;的现象。</p>
+<p>更深层次地，这暴露了纯 atomic semantic ID 范式的<strong>参数化粒度问题</strong>。将 item 拆分为若干独立的 atomic token，相当于把组合语义的学习推给 dense 层隐式承担；而 ID 系统为每个 item 配备独立参数容量——两种参数化方式根本不同。</p>
+<p>TRM 的解法是<strong>混合化</strong>：使高频 token 组合也获得独立参数位（mem-token），将词表从&quot;atomic 单层&quot;扩展为&quot;atomic + 组合&quot;两级。这相当于<strong>承认纯 atomic 化的 semantic ID 范式参数化粒度不足</strong>，必须补充组合粒度的记忆机制。</p>
+<p>由此引出一个更宏观的判断：<strong>纯 atomic semantic token 范式难以独立支撑大规模推荐排序</strong>，必须叠加某种&quot;组合粒度的可学习参数位&quot;。TRM 选择的是 BPE，未来工作可能采用其它方案（学习型组合 head、动态 codebook 扩展等）——但混合化方向应难以回避。</p>
+<hr />
+<h2 id="反思"><a class="markdownIt-Anchor" href="#反思"></a> 反思</h2>
+<h4 id="1-本文与-latte-这类自回归生成-sid工作的关系"><a class="markdownIt-Anchor" href="#1-本文与-latte-这类自回归生成-sid工作的关系"></a> 1. 本文与 Latte 这类&quot;自回归生成 SID&quot;工作的关系？</h4>
+<p>两项工作方向<strong>正交</strong>：</p>
+<ul>
+<li>Latte 关注<strong>自回归生成端</strong>：output 端共享前缀压缩了 item 间区分度，通过添加 latent token 打破耦合；</li>
+<li>TRM 关注<strong>排序判别端</strong>：input 端 ID 不稳定限制 scaling，将其全部替换为 semantic token 并补充原有 ID 才具备的记忆能力。</li>
+</ul>
+<p>但二者存在共同的隐含信号：<strong>semantic token 替代 ID 在两种范式下都需要额外补强</strong>——Latte 解决生成耦合问题，TRM 解决记忆缺失问题。直接 plug-in 的 SID 设计仍不够成熟。</p>
+<p>Latte 和 TRM 两个分别在生成式和判别式的工作，我认为都是类似于在补充 context info 上做的贡献。其核心就是为整个推理过程补充更多的上下文信息，来尽可能减少 SID 替换原来的 ID 造成的信息损失，同时释放原来 SID 占用的大量存储空间。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://baisen.site">Bolin Chen</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://baisen.site/2026/05/27/recommenders-Farewell-to-Item-IDs/">https://baisen.site/2026/05/27/recommenders-Farewell-to-Item-IDs/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://baisen.site" target="_blank">Baisen's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%8E%A8%E8%8D%90%E7%AE%97%E6%B3%95/">推荐算法</a><a class="post-meta__tags" href="/tags/%E5%88%A4%E5%88%AB%E5%BC%8F/">判别式</a><a class="post-meta__tags" href="/tags/SID/">SID</a></div><div class="post_share"><div class="social-share" data-image="https://w.wallhaven.cc/full/e8/wallhaven-e8wrrr.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2026/05/26/recommenders-Latte/"><img class="cover" src="https://w.wallhaven.cc/full/5y/wallhaven-5y7rw3.jpg" onerror="onerror=null;src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Latte: Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2026/05/26/recommenders-Latte/"><img class="cover" src="https://w.wallhaven.cc/full/5y/wallhaven-5y7rw3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-26</div><div class="title">Latte: Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation</div></div></a></div><div><a href="/2026/05/24/recommenders-BLaIR/"><img class="cover" src="https://w.wallhaven.cc/full/ml/wallhaven-mlwxwk.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">BLaIR: Bridging Language and Items for Retrieval and Recommendation</div></div></a></div><div><a href="/2026/05/24/recommenders-DIEN/"><img class="cover" src="https://w.wallhaven.cc/full/rq/wallhaven-rqjrzq.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">DIEN: Deep Interest Evolution Network</div></div></a></div><div><a href="/2026/05/24/recommenders-DIN/"><img class="cover" src="https://w.wallhaven.cc/full/k8/wallhaven-k82dy7.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">DIN: Deep Interest Network</div></div></a></div><div><a href="/2026/05/24/recommenders-FM/"><img class="cover" src="https://w.wallhaven.cc/full/xe/wallhaven-xejq2z.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">FM: Factorized Machine</div></div></a></div><div><a href="/2026/05/24/recommenders-DSIN/"><img class="cover" src="https://w.wallhaven.cc/full/ly/wallhaven-lykljp.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="title">DSIN: Deep Session Interest Network for Click</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/Suguru.jpg" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Bolin Chen</div><div class="author-info__description">平芜尽处是春山</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/BaisenC"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">There's no announcements recently...</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#farewell-to-item-ids-unlocking-the-scaling-potential-of-large-ranking-models-via-semantic-tokens"><span class="toc-number">1.</span> <span class="toc-text"> Farewell to Item IDs: Unlocking the Scaling Potential of Large Ranking Models via Semantic Tokens</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E4%BF%A1%E6%81%AF"><span class="toc-number">1.1.</span> <span class="toc-text"> 基本信息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-number">1.2.</span> <span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8E%E5%B7%B2%E6%9C%89%E5%B7%A5%E4%BD%9C%E5%85%B3%E7%B3%BB"><span class="toc-number">1.3.</span> <span class="toc-text"> 与已有工作关系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A0%94%E7%A9%B6%E5%8A%A8%E6%9C%BA"><span class="toc-number">1.4.</span> <span class="toc-text"> 研究动机</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%B0%E6%9C%89%E9%97%AE%E9%A2%98"><span class="toc-number">1.4.1.</span> <span class="toc-text"> 现有问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E4%B8%AA%E6%A0%B9%E6%9C%AC%E8%A7%82%E5%AF%9F"><span class="toc-number">1.4.2.</span> <span class="toc-text"> 三个根本观察</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E6%96%B9%E6%B3%95-trm"><span class="toc-number">1.5.</span> <span class="toc-text"> 核心方法 TRM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%8D%8F%E5%90%8C%E6%84%9F%E7%9F%A5%E7%9A%84%E5%A4%9A%E6%A8%A1%E6%80%81%E8%A1%A8%E7%A4%BA"><span class="toc-number">1.5.1.</span> <span class="toc-text"> 1. 协同感知的多模态表示</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#stage-1-in-domain-captioning"><span class="toc-number">1.5.1.1.</span> <span class="toc-text"> Stage 1 — In-domain Captioning</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#stage-2-collaborative-alignment"><span class="toc-number">1.5.1.2.</span> <span class="toc-text"> Stage 2 — Collaborative Alignment</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%A4%E9%98%B6%E6%AE%B5%E5%AF%B9%E6%AF%94%E4%B8%80%E8%A7%88"><span class="toc-number">1.5.1.3.</span> <span class="toc-text"> 两阶段对比一览</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%B7%B7%E5%90%88-tokenization-%E6%B3%9B%E5%8C%96%E4%B8%8E%E8%AE%B0%E5%BF%86%E7%9A%84%E6%9D%83%E8%A1%A1"><span class="toc-number">1.5.2.</span> <span class="toc-text"> 2. 混合 Tokenization — 泛化与记忆的权衡</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E6%80%9D%E8%B7%AF"><span class="toc-number">1.5.2.1.</span> <span class="toc-text"> 核心思路</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%A4%E7%B1%BB-token-%E5%AF%B9%E7%85%A7"><span class="toc-number">1.5.2.2.</span> <span class="toc-text"> 两类 token 对照</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%88%A4%E5%88%AB-%E7%94%9F%E6%88%90%E8%81%94%E5%90%88%E8%AE%AD%E7%BB%83"><span class="toc-number">1.5.3.</span> <span class="toc-text"> 3. 判别 + 生成联合训练</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C"><span class="toc-number">1.6.</span> <span class="toc-text"> 实验</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%AE%9E%E9%AA%8C%E8%AE%BE%E7%BD%AE"><span class="toc-number">1.6.1.</span> <span class="toc-text"> 1. 实验设置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%B8%BB%E7%BB%93%E6%9E%9C"><span class="toc-number">1.6.2.</span> <span class="toc-text"> 2. 主结果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-item-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%88%86%E6%9E%90"><span class="toc-number">1.6.3.</span> <span class="toc-text"> 3. Item 生命周期分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-request-time-create-time-%E8%B6%8A%E5%A4%A7-auc-gain-%E5%8F%8D%E8%80%8C%E8%B6%8A%E5%B7%AE"><span class="toc-number">1.6.3.1.</span> <span class="toc-text"> 为什么 request time − create time 越大 AUC gain 反而越差？</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-scaling-law-%E5%AF%B9%E6%AF%94"><span class="toc-number">1.6.4.</span> <span class="toc-text"> 4. Scaling Law 对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="toc-number">1.6.5.</span> <span class="toc-text"> 5. 消融实验</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#51-%E4%B8%89%E5%A4%A7%E7%BB%84%E4%BB%B6%E7%BC%BA%E4%B8%80%E4%B8%8D%E5%8F%AF"><span class="toc-number">1.6.5.1.</span> <span class="toc-text"> 5.1 三大组件缺一不可</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#52-mem-token-%E6%95%B0%E9%87%8F%E4%B8%8E-item-%E5%AF%BF%E5%91%BD"><span class="toc-number">1.6.5.2.</span> <span class="toc-text"> 5.2 Mem-token 数量与 item 寿命</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#53-ntp-loss-%E7%9A%84%E8%B4%A1%E7%8C%AE%E6%9D%A5%E8%87%AA-loss-%E8%80%8C%E9%9D%9E%E9%A2%9D%E5%A4%96%E5%8F%82%E6%95%B0"><span class="toc-number">1.6.5.3.</span> <span class="toc-text"> 5.3 NTP loss 的贡献来自 loss 而非额外参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#54-ntp-loss-vs-positional-encoding"><span class="toc-number">1.6.5.4.</span> <span class="toc-text"> 5.4 NTP loss vs Positional Encoding</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#55-bpe-vs-%E5%85%B6%E5%AE%83%E7%BB%84%E5%90%88%E7%AD%96%E7%95%A5"><span class="toc-number">1.6.5.5.</span> <span class="toc-text"> 5.5 BPE vs 其它组合策略</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E7%BA%BF%E4%B8%8A-ab-%E5%AE%9E%E9%AA%8C"><span class="toc-number">1.6.6.</span> <span class="toc-text"> 6. 线上 A&#x2F;B 实验</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%94%A8%E6%88%B7%E4%B8%BB%E8%A7%82%E8%B0%83%E7%A0%94"><span class="toc-number">1.6.6.1.</span> <span class="toc-text"> 用户主观调研</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA"><span class="toc-number">1.7.</span> <span class="toc-text"> 讨论</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88-id-based-scaling-%E4%BC%9A%E9%A5%B1%E5%92%8C%E8%80%8C-token-based-%E4%B8%8D%E4%BC%9A"><span class="toc-number">1.7.1.</span> <span class="toc-text"> 1. 为什么 ID-based scaling 会饱和而 token-based 不会？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88-gen-token-%E5%8D%95%E7%8B%AC%E4%BD%BF%E7%94%A8%E4%BC%9A%E5%AF%BC%E8%87%B4%E6%80%A7%E8%83%BD%E4%B8%8B%E9%99%8D"><span class="toc-number">1.7.2.</span> <span class="toc-text"> 2. 为什么 gen-token 单独使用会导致性能下降？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E4%B8%BA%E4%BB%80%E4%B9%88-bpe-%E4%BC%98%E4%BA%8E-prefix-ngram"><span class="toc-number">1.7.3.</span> <span class="toc-text"> 3. 为什么 BPE 优于 prefix-ngram？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E4%B8%BA%E4%BB%80%E4%B9%88%E7%94%9F%E6%88%90%E7%9B%AE%E6%A0%87%E4%BB%85%E4%BD%9C%E4%B8%BA%E8%BE%85%E5%8A%A9-%E4%B8%8D%E7%9B%B4%E6%8E%A5%E7%94%A8%E4%BA%8E%E7%94%9F%E6%88%90%E6%A3%80%E7%B4%A2"><span class="toc-number">1.7.4.</span> <span class="toc-text"> 4. 为什么生成目标仅作为辅助、不直接用于生成检索？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%B0%86-bpe-%E8%BF%99%E7%B1%BB-nlp-tokenizer-%E6%80%9D%E8%B7%AF%E5%BA%94%E7%94%A8%E4%BA%8E-sid-%E6%98%AF%E5%90%A6%E5%90%88%E7%90%86"><span class="toc-number">1.7.5.</span> <span class="toc-text"> 5. 将 BPE 这类 NLP tokenizer 思路应用于 SID 是否合理？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E4%B8%BA%E4%BB%80%E4%B9%88-request-time-create-time-%E8%B6%8A%E5%A4%A7-semantic-token-%E5%8F%8D%E8%80%8C%E6%80%A7%E8%83%BD%E8%B6%8A%E5%B7%AE"><span class="toc-number">1.7.6.</span> <span class="toc-text"> 6. 为什么 “request time − create time” 越大、semantic token 反而性能越差？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E6%80%9D"><span class="toc-number">1.8.</span> <span class="toc-text"> 反思</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E6%9C%AC%E6%96%87%E4%B8%8E-latte-%E8%BF%99%E7%B1%BB%E8%87%AA%E5%9B%9E%E5%BD%92%E7%94%9F%E6%88%90-sid%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-number">1.8.1.</span> <span class="toc-text"> 1. 本文与 Latte 这类&quot;自回归生成 SID&quot;工作的关系？</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/05/27/recommenders-Farewell-to-Item-IDs/"><img src="https://w.wallhaven.cc/full/e8/wallhaven-e8wrrr.jpg" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="Farewell to Item IDs: Unlocking the Scaling Potential of Large Ranking Models via Semantic Tokens"/></a><div class="content"><a class="title" href="/2026/05/27/recommenders-Farewell-to-Item-IDs/">Farewell to Item IDs: Unlocking the Scaling Potential of Large Ranking Models via Semantic Tokens</a><time datetime="2026-05-26T18:47:52.000Z" title="发表于 2026-05-27 02:47:52">2026-05-27</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/26/recommenders-Latte/"><img src="https://w.wallhaven.cc/full/5y/wallhaven-5y7rw3.jpg" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="Latte: Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation"/></a><div class="content"><a class="title" href="/2026/05/26/recommenders-Latte/">Latte: Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation</a><time datetime="2026-05-25T17:19:13.000Z" title="发表于 2026-05-26 01:19:13">2026-05-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/25/recommenders-mpformer/"><img src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/20260525000624207001.png" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="MPFormer: Adaptive Framework for Industrial Multi-Task Personalized Sequential Retriever"/></a><div class="content"><a class="title" href="/2026/05/25/recommenders-mpformer/">MPFormer: Adaptive Framework for Industrial Multi-Task Personalized Sequential Retriever</a><time datetime="2026-05-24T16:03:07.000Z" title="发表于 2026-05-25 00:03:07">2026-05-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/24/recommenders-UniMixer/"><img src="https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/20260525000624185.png" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="UniMixer: A Unified Architecture for Scaling Laws in Recommendation Systems"/></a><div class="content"><a class="title" href="/2026/05/24/recommenders-UniMixer/">UniMixer: A Unified Architecture for Scaling Laws in Recommendation Systems</a><time datetime="2026-05-24T15:57:06.000Z" title="发表于 2026-05-24 23:57:06">2026-05-24</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/24/recommenders-reading-list/"><img src="https://w.wallhaven.cc/full/8x/wallhaven-8xg8jj.jpg" onerror="this.onerror=null;this.src='https://take-out-bucket-baisenzz.oss-cn-beijing.aliyuncs.com/blog/404.jpg'" alt="2026-05-推荐算法论文阅读清单"/></a><div class="content"><a class="title" href="/2026/05/24/recommenders-reading-list/">2026-05-推荐算法论文阅读清单</a><time datetime="2026-05-24T15:52:21.000Z" title="发表于 2026-05-24 23:52:21">2026-05-24</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2026 By Bolin Chen</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a href="baisen.site">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=4.13.0"></script><script src="/js/main.js?v=4.13.0"></script><script src="/js/tw_cn.js?v=4.13.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.33/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script></div><div class="aplayer" data-id="289423538" data-server="netease" data-type="album" data-fixed="true" data-autoplay="false" data-theme="#49b1f5" data-loop="all" data-order="list" data-preload="none" data-volume="0.5" data-mutex="true" data-listfolded="true" data-listmaxheight="340px"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/metingjs/dist/Meting.min.js"></script></div></body></html>
