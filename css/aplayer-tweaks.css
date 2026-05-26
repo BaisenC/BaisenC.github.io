@@ -1,0 +1,111 @@
+/*
+ * APlayer tweaks — match Butterfly's card visual language.
+ * Strictly cosmetic, no DOM changes; all colors via Butterfly CSS tokens so
+ * dark/light mode auto-follows the theme toggle.
+ *
+ * Loaded via themes/butterfly/_config.yml inject.head.
+ */
+
+/* ---------- Container: rounded card, theme-following bg/shadow ---------- */
+.aplayer.aplayer-fixed {
+  border-radius: 12px !important;
+  background: var(--card-bg) !important;
+  color: var(--font-color);
+  box-shadow: var(--card-box-shadow);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.aplayer.aplayer-fixed:hover {
+  box-shadow: var(--card-hover-box-shadow);
+}
+
+/* ---------- Album art: rounded on the left side ---------- */
+.aplayer.aplayer-fixed .aplayer-pic {
+  border-radius: 12px 0 0 12px !important;
+  background-color: var(--text-bg-hover);
+}
+
+/* ---------- Info panel: title bigger, less top padding (subtitle 上提) ---------- */
+.aplayer.aplayer-fixed .aplayer-info {
+  padding: 6px 10px 8px 10px !important;
+  color: var(--font-color);
+}
+
+.aplayer.aplayer-fixed .aplayer-info .aplayer-music {
+  margin-bottom: 6px !important;
+  line-height: 1.35 !important;
+}
+
+.aplayer.aplayer-fixed .aplayer-info .aplayer-title {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: var(--font-color) !important;
+  letter-spacing: 0.1px;
+}
+
+.aplayer.aplayer-fixed .aplayer-info .aplayer-author {
+  font-size: 12.5px !important;
+  color: var(--font-color) !important;
+  opacity: 0.62;
+  margin-left: 2px;
+}
+
+/* ---------- Time + controls follow theme ---------- */
+.aplayer.aplayer-fixed .aplayer-controller .aplayer-time {
+  color: var(--font-color) !important;
+  opacity: 0.68;
+}
+
+.aplayer.aplayer-fixed .aplayer-controller .aplayer-icon {
+  opacity: 0.72;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.aplayer.aplayer-fixed .aplayer-controller .aplayer-icon:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.aplayer.aplayer-fixed .aplayer-controller .aplayer-icon path {
+  fill: var(--font-color) !important;
+}
+
+/* ---------- Progress bar thumb: subtle aura ---------- */
+.aplayer.aplayer-fixed .aplayer-controller .aplayer-bar-wrap .aplayer-bar .aplayer-played .aplayer-thumb {
+  box-shadow: 0 0 0 3px rgba(73, 177, 245, 0.2);
+}
+
+/* ---------- Native collapse arrow: round outer edge ---------- */
+.aplayer.aplayer-fixed .aplayer-body .aplayer-miniswitcher {
+  border-radius: 0 12px 12px 0 !important;
+}
+
+/* ---------- Playlist: rounded hover state ---------- */
+.aplayer.aplayer-fixed .aplayer-list {
+  border-top: 1px solid var(--hr-border, rgba(0, 0, 0, 0.06)) !important;
+}
+
+.aplayer.aplayer-fixed .aplayer-list ol li {
+  padding: 7px 14px !important;
+  transition: background 0.15s ease;
+  border-top: none !important;
+}
+
+.aplayer.aplayer-fixed .aplayer-list ol li:hover {
+  background: var(--text-bg-hover) !important;
+}
+
+.aplayer.aplayer-fixed .aplayer-list ol li.aplayer-list-light {
+  background: var(--text-bg-hover) !important;
+}
+
+.aplayer.aplayer-fixed .aplayer-list ol li .aplayer-list-author {
+  color: var(--font-color) !important;
+  opacity: 0.6;
+}
+
+/* ---------- Lyric row (off via config) ---------- */
+.aplayer.aplayer-fixed .aplayer-lrc p.aplayer-lrc-current {
+  color: var(--font-color) !important;
+}
