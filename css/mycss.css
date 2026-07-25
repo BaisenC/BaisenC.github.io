@@ -147,4 +147,17 @@
   max-width: min(500px, 100%);
 }
 
+/* 照片墙由 InfiniteGrid 决定每个格子的尺寸，图片只负责等比填满格子。 */
+#article-container .gallery-container .gallery-items .item {
+  overflow: hidden;
+}
+
+#article-container .gallery-container .gallery-items img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center;
+}
+
   
