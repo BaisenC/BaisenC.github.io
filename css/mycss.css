@@ -45,6 +45,11 @@
   color: #121212;
 }
 
+/* 浅色模式下，下拉菜单悬停时用白色文字和图标配合深色背景。 */
+:root:not([data-theme="dark"]) #nav .menus_item_child > li:hover > a {
+  color: var(--white) !important;
+}
+
 /* 文章底部版权区: butterfly 把"文章作者/链接/版权声明" 标签和右上角图标写死了 #000,
    dark 模式下变成黑底黑字看不见. 翻成正文色. */
 [data-theme="dark"] #post .post-copyright .post-copyright-meta,
