@@ -33,14 +33,22 @@
     background-color: #4b4c4d;
   }
 
-/* 列表底部分页码:
-   light 模式保留默认黑底白字 (butterfly 自带, 不动);
-   dark 模式反转成白底深字, 在深色页面上像个干净按钮 */
-[data-theme="dark"] #pagination .page-number.current {
-  background: #fff;
-  color: #121212;
+/* 分页链接和箭头在浅色、深色卡片上保持可辨认。 */
+#pagination .pagination > a {
+  color: #526079;
 }
-[data-theme="dark"] #pagination .page-number:not(.current):hover {
+
+[data-theme="dark"] #pagination .pagination > a {
+  color: var(--font-color);
+}
+
+:root:not([data-theme="dark"]) #pagination .pagination > a:hover {
+  background: #595959;
+  color: #fff;
+}
+
+[data-theme="dark"] #pagination .page-number.current,
+[data-theme="dark"] #pagination .pagination > a:hover {
   background: #fff;
   color: #121212;
 }
@@ -48,6 +56,22 @@
 /* 浅色模式下，下拉菜单悬停时用白色文字和图标配合深色背景。 */
 :root:not([data-theme="dark"]) #nav .menus_item_child > li:hover > a {
   color: var(--white) !important;
+}
+
+/* 侧栏和窄屏导航用浅色高亮，保留深色文字与图标。 */
+:root:not([data-theme="dark"]) #aside-content :is(.card-archive-list-link, .card-category-list-link):hover,
+:root:not([data-theme="dark"]) #sidebar #sidebar-menus .menus_items .site-page:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* 正文中的普通链接和首页小字使用更深的颜色。 */
+:root:not([data-theme="dark"]) #article-container a:not([class]) {
+  color: #17649a;
+}
+
+:root:not([data-theme="dark"]) #recent-posts > .recent-post-item > .recent-post-info > .article-meta-wrap,
+:root:not([data-theme="dark"]) #recent-posts > .recent-post-item > .recent-post-info > .article-meta-wrap a:not(:hover) {
+  color: #6b6b6b;
 }
 
 /* 文章底部版权区: butterfly 把"文章作者/链接/版权声明" 标签和右上角图标写死了 #000,
@@ -137,12 +161,13 @@
 [data-theme="dark"] #post .tag_share .post-meta__tags {
   border-color: rgba(255, 255, 255, 0.3);
   color: rgba(255, 255, 255, 0.85);
+  transition-property: border-color;
 }
 
 [data-theme="dark"] #post .tag_share .post-meta__tags:hover {
   background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
   border-color: transparent;
-  color: #fff;
+  color: #121212;
 }
 
 /* 文章正文图片: butterfly 默认 max-width:100% 会撑满 800px 太大,

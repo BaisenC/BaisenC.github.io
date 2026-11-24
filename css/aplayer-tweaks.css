@@ -57,7 +57,7 @@
 
 .aplayer.aplayer-fixed .aplayer-info .aplayer-author {
   color: var(--font-color) !important;
-  opacity: 0.65;
+  opacity: 0.9;
   font-size: 13px !important;
 }
 
@@ -69,7 +69,7 @@
 /* ---------- Time + controls follow theme ---------- */
 .aplayer.aplayer-fixed .aplayer-info .aplayer-controller .aplayer-time {
   color: var(--font-color) !important;
-  opacity: 0.7;
+  opacity: 0.9;
 }
 
 .aplayer.aplayer-fixed .aplayer-info .aplayer-controller .aplayer-icon path {
@@ -80,6 +80,21 @@
 
 .aplayer.aplayer-fixed .aplayer-info .aplayer-controller .aplayer-icon:hover path {
   opacity: 1;
+}
+
+/* Keep playback notices readable above the player, including in mini mode. */
+.aplayer.aplayer-fixed .aplayer-notice {
+  top: auto;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 32px));
+  transform: none;
+  background: var(--card-bg);
+  box-shadow: var(--card-box-shadow);
+  color: var(--text-highlight-color);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Native collapse arrow: round outer edge ---------- */
@@ -114,7 +129,7 @@
 
 .aplayer.aplayer-fixed .aplayer-list ol li .aplayer-list-author {
   color: var(--font-color) !important;
-  opacity: 0.6;
+  opacity: 0.9;
 }
 
 /* The 3px theme-color vertical bar APlayer draws on the currently-playing row */
