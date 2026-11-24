@@ -3525,11 +3525,17 @@ h1.page-title + .tag-cloud-list {
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;
+  background-image: var(--banner-desktop, none);
   -webkit-transition: all 0.5s;
   -moz-transition: all 0.5s;
   -o-transition: all 0.5s;
   -ms-transition: all 0.5s;
   transition: all 0.5s;
+}
+@media screen and (max-width: 768px) {
+  #page-header {
+    background-image: var(--banner-mobile, none);
+  }
 }
 #page-header:not(.not-top-img):before {
   position: absolute;
