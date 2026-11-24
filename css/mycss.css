@@ -59,7 +59,8 @@
 }
 
 /* 侧栏和窄屏导航用浅色高亮，保留深色文字与图标。 */
-:root:not([data-theme="dark"]) #aside-content :is(.card-archive-list-link, .card-category-list-link):hover,
+:root:not([data-theme="dark"]) #aside-content .card-archives .card-archive-list-link:hover,
+:root:not([data-theme="dark"]) #aside-content .card-categories .card-category-list-link:hover,
 :root:not([data-theme="dark"]) #sidebar #sidebar-menus .menus_items .site-page:hover {
   background-color: rgba(0, 0, 0, 0.08);
 }
